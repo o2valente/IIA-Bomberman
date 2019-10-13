@@ -35,9 +35,15 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                     await websocket.recv()
                 )  # receive game state, this must be called timely or your game will get out of sync with the server4
                 
+
                 position = state['bomberman']
                 x,y = position
                 walls = state['walls']
+                
+
+
+        ############################# teste #############################
+                
                 if y == 1:
                     key = "d"
                 if x == 9:
@@ -48,6 +54,8 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                     if(calc_distance(position,wall) <= 1):
                         if not mapa.is_stone(wall):
                             key = "B"
+
+    ###############################################################################
 
                 # Next lines are only for the Human Agent, the key values are nonetheless the correct ones!
                 # await websocket.send(
