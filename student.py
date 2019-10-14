@@ -33,6 +33,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
         direction = True
         put_bomb = False
         way = []
+        
 
         while True:
             try:
@@ -51,6 +52,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
 
                 wall_closer = get_walls(position,mapa,walls)
                 print(wall_closer)
+                  
                 if direction == True :
                     key = get_to(position,wall_closer)
                 else:
@@ -59,6 +61,21 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                     key = stuck_on_wall(position,mapa)
                     direction = not direction
 
+                if(put_bomb == True):
+                    
+                    key = way.pop()
+                    if(calc_distance(position,bomb) > 4):
+                        key = " "
+                    if way == []: 
+                        put_bomb = False
+                   
+                if(calc_distance(position,wall_closer) == 1 and put_bomb == False):
+                    put_bomb = True
+                    key = "B"
+                    bomb = position
+                    
+                pos_ant = position
+                
                 if(put_bomb == False):
                     if(key == "s"):
                         way.append("w")
@@ -69,18 +86,6 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                     if(key == "a"):
                         way.append("d")
 
-                if(put_bomb == True):
-                    key = way.pop()
-                    if way == []:
-                        put_bomb =False
-                   
-                if(calc_distance(position,wall_closer) == 1 and put_bomb == False):
-                    put_bomb = True
-                    key = "B"
-                    
-                pos_ant = position
-
-                print(key) 
                     
     ###############################################################################
 
@@ -136,6 +141,24 @@ def get_to(pos1,pos2):
         return "w"
     if(y < y_2):
         return "s"
+
+# def closer(pos,adj1,adj2,adj3,adj4):
+#     min = 10000
+
+#     if(calc_distance(pos,adj1) < min):
+#         min = calc_distance(pos,adj1)
+#         close = adj1
+#     if(calc_distance(pos,adj2) < min):
+#         min = calc_distance(pos,adj2)
+#         close = adj2
+#     if(calc_distance(pos,adj3) < min):
+#         min = calc_distance(pos,adj3)
+#         close = adj3
+#     if(calc_distance(pos,adj4) < min):
+#         min = calc_distance(pos,adj4)
+#         close = adj4
+
+#     return close
 
 def get_to_y(pos1,pos2):
     x,y = pos1
