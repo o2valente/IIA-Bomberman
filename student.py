@@ -28,7 +28,12 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
         # SCREEN = pygame.display.set_mode((299, 123))
         # SPRITES = pygame.image.load("data/pad.png").convert_alpha()
         # SCREEN.blit(SPRITES, (0, 0))
+
         pos_ant = (0,0)
+        direction = True
+        put_bomb = False
+        way = []
+
         while True:
             try:
                 state = json.loads(
@@ -44,16 +49,39 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
 
                
 
-                wall_closer = get_walls(walls)
-
-                key = get_to(position,wall_closer)
-
+                wall_closer = get_walls(position,mapa,walls)
+                print(wall_closer)
+                if direction == True :
+                    key = get_to(position,wall_closer)
+                else:
+                    key = get_to_y(position,wall_closer)
                 if(position == pos_ant):
                     key = stuck_on_wall(position,mapa)
-                # if(calc_distance(position,wall_closer) == 1):
-                #     key = "B"
+                    direction = not direction
+
+                if(put_bomb == False):
+                    if(key == "s"):
+                        way.append("w")
+                    if(key == "w"):
+                        way.append("s")
+                    if(key == "d"):
+                        way.append("a")
+                    if(key == "a"):
+                        way.append("d")
+
+                if(put_bomb == True):
+                    key = way.pop()
+                    if way == []:
+                        put_bomb =False
+                   
+                if(calc_distance(position,wall_closer) == 1 and put_bomb == False):
+                    put_bomb = True
+                    key = "B"
+                    
                 pos_ant = position
 
+                print(key) 
+                    
     ###############################################################################
 
                 # Next lines are only for the Human Agent, the key values are nonetheless the correct ones!
@@ -109,6 +137,20 @@ def get_to(pos1,pos2):
     if(y < y_2):
         return "s"
 
+def get_to_y(pos1,pos2):
+    x,y = pos1
+    x_2,y_2 = pos2
+
+    if(y > y_2):
+        return "w"
+    if(y < y_2):
+        return "s"
+    if(x < x_2):
+        return "d"
+    if(x > x_2):
+        return "a"
+    
+
 def stuck_on_wall(pos,mapa):
     x,y = pos
     if not mapa.is_stone((x+1,y)):
@@ -120,13 +162,14 @@ def stuck_on_wall(pos,mapa):
     if not mapa.is_stone((x,y-1)):
         return "s"
 
-def get_walls(pos,mapa):
+def get_walls(position,mapa,walls):
     min = 10000
     for wall in walls:
         if not mapa.is_stone(wall):
             if(calc_distance(position,wall) < min):
                 min = calc_distance(position,wall)
-                return wall
+                wall_closer = wall
+    return wall_closer
 
 # DO NOT CHANGE THE LINES BELLOW
 # You can change the default values using the command line, example:
