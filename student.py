@@ -28,32 +28,31 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
         # SCREEN = pygame.display.set_mode((299, 123))
         # SPRITES = pygame.image.load("data/pad.png").convert_alpha()
         # SCREEN.blit(SPRITES, (0, 0))
-
+        pos_ant = (0,0)
         while True:
             try:
                 state = json.loads(
                     await websocket.recv()
                 )  # receive game state, this must be called timely or your game will get out of sync with the server4
                 
-
                 position = state['bomberman']
                 x,y = position
                 walls = state['walls']
                 
-
-
         ############################# teste #############################
                 
-                if y == 1:
-                    key = "d"
-                if x == 9:
-                    key = "s"
-                for wall in walls:
-                    calc_distance((1,1),(2,2))
-                    print(calc_distance(position,wall))
-                    if(calc_distance(position,wall) <= 1):
-                        if not mapa.is_stone(wall):
-                            key = "B"
+
+               
+
+                wall_closer = get_walls(walls)
+
+                key = get_to(position,wall_closer)
+
+                if(position == pos_ant):
+                    key = stuck_on_wall(position,mapa)
+                # if(calc_distance(position,wall_closer) == 1):
+                #     key = "B"
+                pos_ant = position
 
     ###############################################################################
 
@@ -97,6 +96,38 @@ def calc_distance(pos1,pos2):
     x2,y2 = pos2
     return math.sqrt(pow(x2-x1,2) + pow(y2-y1,2))
 
+def get_to(pos1,pos2):
+    x,y = pos1
+    x_2,y_2 = pos2
+
+    if(x < x_2):
+        return "d"
+    if(x > x_2):
+        return "a"
+    if(y > y_2):
+        return "w"
+    if(y < y_2):
+        return "s"
+
+def stuck_on_wall(pos,mapa):
+    x,y = pos
+    if not mapa.is_stone((x+1,y)):
+        return "d"
+    if not mapa.is_stone((x,y+1)):
+        return "w"
+    if not mapa.is_stone((x-1,y)):
+        return "a"
+    if not mapa.is_stone((x,y-1)):
+        return "s"
+
+def get_walls(pos,mapa):
+    min = 10000
+    for wall in walls:
+        if not mapa.is_stone(wall):
+            if(calc_distance(position,wall) < min):
+                min = calc_distance(position,wall)
+                return wall
+
 # DO NOT CHANGE THE LINES BELLOW
 # You can change the default values using the command line, example:
 # $ NAME='bombastico' python3 client.py
@@ -105,8 +136,4 @@ SERVER = os.environ.get("SERVER", "localhost")
 PORT = os.environ.get("PORT", "8000")
 NAME = os.environ.get("NAME", getpass.getuser())
 loop.run_until_complete(agent_loop(f"{SERVER}:{PORT}", NAME))
-
-
-
-
 
