@@ -33,6 +33,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
         direction = True
         put_bomb = False
         way = []
+        have_walls = True
 
         while True:
             try:
@@ -44,37 +45,34 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 x,y = position
                 walls = state['walls']
                 #enemy_name, enemy_pos = state['enemies']
+                enemies = state['enemies']
+                if(walls == []):
+                    have_walls = False
                 
-        ############################# teste #############################
-                
+                if(have_walls == True):
+                    wall_closer = get_walls(position,mapa,walls)
 
-               
-                
-                wall_closer = get_walls(position,mapa,walls)
-                print(wall_closer)
-                  
-                if direction == True :
-                    key = get_to(position,wall_closer)
-                else:
-                    key = get_to_y(position,wall_closer)
-                if(position == pos_ant):
-                    key = stuck_on_wall(position,mapa)
-                    direction = not direction
+                    if direction == True :
+                        key = get_to(position,wall_closer)
+                    else:
+                        key = get_to_y(position,wall_closer)
+                    if(position == pos_ant):
+                        key = stuck_on_wall(position,mapa)
+                        direction = not direction
 
-                pos_enemy = get_closest_enemy(state)
-                dist_closest_enemy = calc_distance(position,pos_enemy)
-                print(dist_closest_enemy)
-
-                #if dist_closest_enemy < 3 :
-                    #key = way.pop()
-                    
-                    
+                pos_enemy = get_enemies(position,enemies)['pos']
+        
+                # print(pos_enemy)
                 if(put_bomb == True):
                     key = way.pop()
                     if(calc_distance(position,bomb) > 4):
                         key = " "
                     if way == []: 
                         put_bomb = False
+                # print(calc_distance(position,pos_enemy))
+                if(calc_distance(position,pos_enemy) <= 3):
+                    x_e,y_e = pos_enemy
+                    get_to(position,(x_e+5,y_e+5))
                    
                 if(calc_distance(position,wall_closer) == 1 and put_bomb == False):
                     put_bomb = True
@@ -92,14 +90,12 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                         way.append("a")
                     if(key == "a"):
                         way.append("d")
-                
-                spawn = 1,1
 
-                have_walls = True
+                
 
                 
                     
-                print(have_walls)
+                # print(have_walls)
                     
     ###############################################################################
 
@@ -208,19 +204,28 @@ def get_walls(position,mapa,walls):
                 wall_closer = wall
     return wall_closer
 
-def get_closest_enemy(state):
-    enemies = state['enemies']
-    if len(enemies) == 0:
-        return None
-    if len(enemies) == 1:
-        return enemies[0]['pos']
-    bomberman = state['bomberman']
-    closest = None,float("inf") 
+def get_enemies(position,enemies):
+    min = 10000
+    print(enemies)
     for enemy in enemies:
-        dist = calc_distance(bomberman,enemy['pos'])
-        if dist < closest[1]:
-            closest = enemy,dist
-    return closest[0]['pos']
+        if calc_distance(position,enemy['pos']) < min:
+            min = calc_distance(position,enemy['pos'])
+            enemy_closer = enemy
+    return enemy_closer
+
+# def get_closest_enemy(state):
+#     enemies = state['enemies']
+#     if len(enemies) == 0:
+#         return None
+#     if len(enemies) == 1:
+#         return enemies[0]['pos']
+#     bomberman = state['bomberman']
+#     closest = None,float("inf") 
+#     for enemy in enemies:
+#         dist = calc_distance(bomberman,enemy['pos'])
+#         if dist < closest[1]:
+#             closest = enemy,dist
+#     return closest[0]['pos']
 
 
 # DO NOT CHANGE THE LINES BELLOW
