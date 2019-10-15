@@ -49,7 +49,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 
 
                
-
+                
                 wall_closer = get_walls(position,mapa,walls)
                 print(wall_closer)
                   
@@ -65,7 +65,11 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 dist_closest_enemy = calc_distance(position,pos_enemy)
                 print(dist_closest_enemy)
 
-                if(put_bomb == True or dist_closest_enemy < 2):
+                #if dist_closest_enemy < 3 :
+                    #key = way.pop()
+                    
+                    
+                if(put_bomb == True):
                     key = way.pop()
                     if(calc_distance(position,bomb) > 4):
                         key = " "
@@ -91,9 +95,11 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 
                 spawn = 1,1
 
-                #if(wall_closer == None,None):
-                    #key = get_to(position,spawn)
+                have_walls = True
 
+                
+                    
+                print(have_walls)
                     
     ###############################################################################
 
