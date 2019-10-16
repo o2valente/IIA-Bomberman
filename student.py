@@ -44,13 +44,53 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 position = state['bomberman']
                 x,y = position
                 walls = state['walls']
-                #enemy_name, enemy_pos = state['enemies']
                 enemies = state['enemies']
-                if(walls == []):
-                    have_walls = False
+
                 
-                if(have_walls == True):
-                    wall_closer = get_walls(position,mapa,walls)
+                wall_len = len(state['walls'])
+
+                
+                pos_enemy = get_enemies(state,position,enemies)['pos']
+                
+
+
+                spawn = 1,1
+
+                if(wall_len == 0):
+                    if(len(enemies) != 0):
+                        print("Não há paredes")
+                        have_walls = False
+                        if direction == True :
+                            key = get_to(position,spawn)
+                        else:
+                            key = get_to_y(position,spawn)
+                        if(position == pos_ant):
+                            key = stuck_on_wall(position,mapa)
+                            direction = not direction
+                        print("Estou a ir")
+                        if(state['bomberman'] == [1,1] and not put_bomb):
+                            print("im here")
+                            put_bomb = True
+                            print("put bomb")
+                            key = "B"
+                            print("key b")
+                            bomb = position
+                    else:
+                        if direction == True :
+                            key = get_to(position,state['exit'])
+                        else:
+                            key = get_to_y(position,state['exit'])
+                        if(position == pos_ant):
+                            key = stuck_on_wall(position,mapa)
+                            direction = not direction
+                
+                if way == []: 
+                    put_bomb = False
+                
+               
+                
+                if(have_walls == True and wall_len != 0):
+                    wall_closer = get_walls(state,position,mapa,walls)
 
                     if direction == True :
                         key = get_to(position,wall_closer)
@@ -60,24 +100,31 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                         key = stuck_on_wall(position,mapa)
                         direction = not direction
 
-                pos_enemy = get_enemies(position,enemies)['pos']
-        
-                # print(pos_enemy)
                 if(put_bomb == True):
+                    print("Bomba")
                     key = way.pop()
-                    if(calc_distance(position,bomb) > 4):
-                        key = " "
-                    if way == []: 
-                        put_bomb = False
+                    if(calc_distance(position,bomb) > 5):
+                       #key = ""
+                       put_bomb = False
+                
+                if(pos_enemy != None):
+                    if(calc_distance(position,pos_enemy) < 3 and not put_bomb):
+                        #x_e,y_e = pos_enemy
+                        #get_to(position,(x_e+5,y_e+5))
+                        put_bomb = True
+                        key = "B"
+                        bomb = position
+                
+
+
                 # print(calc_distance(position,pos_enemy))
-                if(calc_distance(position,pos_enemy) <= 3):
-                    x_e,y_e = pos_enemy
-                    get_to(position,(x_e+5,y_e+5))
+                
                    
-                if(calc_distance(position,wall_closer) == 1 and put_bomb == False):
+                if(calc_distance(position,wall_closer) == 1 and not put_bomb):
                     put_bomb = True
                     key = "B"
                     bomb = position
+
                     
                 pos_ant = position
                 
@@ -90,37 +137,8 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                         way.append("a")
                     if(key == "a"):
                         way.append("d")
-
                 
-
-                
-                    
-                # print(have_walls)
-                    
-    ###############################################################################
-
-                # Next lines are only for the Human Agent, the key values are nonetheless the correct ones!
-                # await websocket.send(
-                #             json.dumps({"cmd": "key", "key": key})
-                #         ) 
-
-                # for event in pygame.event.get():
-                #     if event.type == pygame.QUIT or not state["lives"]:
-                #         pygame.quit()
-
-                #     if event.type == pygame.KEYDOWN:
-                #         if event.key == pygame.K_UP:
-                #             key = "w"
-                #         elif event.key == pygame.K_LEFT:
-                #             key = "a"
-                #         elif event.key == pygame.K_DOWN:
-                #             key = "s"
-                #         elif event.key == pygame.K_RIGHT:
-                #             key = "d"
-                #         elif event.key == pygame.K_a:
-                #             key = "A"
-                #         elif event.key == pygame.K_b:
-                #             key = "B"
+                print("Sending key:" + key)
 
                 await websocket.send(
                     json.dumps({"cmd": "key", "key": key})
@@ -152,23 +170,6 @@ def get_to(pos1,pos2):
     if(y < y_2):
         return "s"
 
-# def closer(pos,adj1,adj2,adj3,adj4):
-#     min = 10000
-
-#     if(calc_distance(pos,adj1) < min):
-#         min = calc_distance(pos,adj1)
-#         close = adj1
-#     if(calc_distance(pos,adj2) < min):
-#         min = calc_distance(pos,adj2)
-#         close = adj2
-#     if(calc_distance(pos,adj3) < min):
-#         min = calc_distance(pos,adj3)
-#         close = adj3
-#     if(calc_distance(pos,adj4) < min):
-#         min = calc_distance(pos,adj4)
-#         close = adj4
-
-#     return close
 
 def get_to_y(pos1,pos2):
     x,y = pos1
@@ -195,37 +196,28 @@ def stuck_on_wall(pos,mapa):
     if not mapa.is_stone((x,y-1)):
         return "s"
 
-def get_walls(position,mapa,walls):
+def get_walls(state,position,mapa,walls):
     min = 10000
-    for wall in walls:
-        if not mapa.is_stone(wall):
-            if(calc_distance(position,wall) < min):
-                min = calc_distance(position,wall)
-                wall_closer = wall
-    return wall_closer
+    wall_len = len(state['walls'])
+    if(wall_len != 0):
+        for wall in walls:
+            if not mapa.is_stone(wall):
+                if(calc_distance(position,wall) < min):
+                    min = calc_distance(position,wall)
+                    wall_closer = wall
+        return wall_closer
 
-def get_enemies(position,enemies):
+def get_enemies(state,position,enemies):
     min = 10000
-    print(enemies)
-    for enemy in enemies:
-        if calc_distance(position,enemy['pos']) < min:
-            min = calc_distance(position,enemy['pos'])
-            enemy_closer = enemy
+    if(len(state['enemies']) != 0):
+        for enemy in enemies:
+            if calc_distance(position,enemy['pos']) < min:
+                min = calc_distance(position,enemy['pos'])
+                enemy_closer = enemy
+    else:
+        enemy_closer = None
     return enemy_closer
 
-# def get_closest_enemy(state):
-#     enemies = state['enemies']
-#     if len(enemies) == 0:
-#         return None
-#     if len(enemies) == 1:
-#         return enemies[0]['pos']
-#     bomberman = state['bomberman']
-#     closest = None,float("inf") 
-#     for enemy in enemies:
-#         dist = calc_distance(bomberman,enemy['pos'])
-#         if dist < closest[1]:
-#             closest = enemy,dist
-#     return closest[0]['pos']
 
 
 # DO NOT CHANGE THE LINES BELLOW
