@@ -60,6 +60,10 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 enemies = state['enemies']
                 power_ups = state['powerups']
 
+                if len(enemies) == 0:
+                    pos_enemy = None
+                else:
+                    pos_enemy = get_enemies(state,position,enemies)['pos']
                 
                 if find_power_up(state,mapa) is None:
                     power_up_found = True
@@ -71,22 +75,27 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                         have_walls = False
                         if(not enemy_on_sight and not put_bomb and not power_up_found):
                             key = walk(position,find_power_up(state,mapa))
-                        elif not enemy_on_sight and not put_bomb and position != spawn:
-                            print("Aqi")
+                            if(position == pos_ant):
+                                key = change_path(position,mapa)
+                        elif not enemy_on_sight and not put_bomb and position != [1,1] :
                             key = walk(position,spawn)
+                            if(position == pos_ant):
+                                key = change_path(position,mapa)
+                            print("sending key:" + key)
                             # key = walk(position,intercept_enemie(pos_enemy))
                             # key = walk(position,pos_enemy)
-                            if(position == pos_ant and position != spawn):
+                            if(position == pos_ant and position != [1,1]):
                                 key = change_path(position,mapa)
-                        elif position == spawn:
-                            print("Hello")
+                        elif position == [1,1]:
                             # waiting_for_enemies = True
                             key = ""
-                            way.append("s")
-                            way.append("s")
-                            way.append("d")
-                            if calc_distance(position,pos_enemy) <= 5:  
+                            if calc_distance(position,pos_enemy) < 3:  
                                 attack(position)
+                            key = "B"    
+                            way.append("d")
+                            way.append("d")
+                            way.append("s")
+                            
                                 # waiting_for_enemies = False
                             # if position == intercept_enemie(pos_enemy):
                             #     print("Attack>!!")
@@ -95,11 +104,6 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                         key = walk(position,state['exit'])
                         if(position == pos_ant):
                             key = change_path(position,mapa)
-
-                if len(enemies) == 0:
-                    pos_enemy = None
-                else:
-                    pos_enemy = get_enemies(state,position,enemies)['pos']
 
                 if len(walls) == 0:
                     have_walls = False
@@ -135,6 +139,8 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 
                 if(put_bomb == False and key != ""):
                     way.append(memorize_path(key))
+                
+                
 
 ###################################################################################################################################################33
 
