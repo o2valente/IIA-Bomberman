@@ -81,33 +81,9 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                                 key = change_path(position,mapa)
                         elif  not put_bomb: # and position != [1,1]
                             key = walk(position,intercept_enemie(pos_enemy))
-                            
-                            # key = walk(position,intercept_enemie(pos_enemy))
-                            # key = walk(position,pos_enemy)
                             if(position == pos_ant):
                                 key = change_path(position,mapa)
-                        # elif position == [1, 1] :
-                        #     print(way)
-                        #     # if calc_distance(position,pos_enemy) < 3:  
-                        #     #     key = attack(position) 
-                        #     # waiting_for_enemies = True
-                        #     # key = ""
-                        #     # way = []
-                        #     # way.append("w")
-                        #     # way.append("w")
-                        #     # way.append("a")
-                        #     # way.append("a")
-                        #     # way.append("a")
-                            
-                            
-                            
-                        #         # waiting_for_enemies = False
-                        #     key = walk(position,intercept_enemie(pos_enemy))
-                        #     if(position == pos_ant):
-                        #         key = change_path(position,mapa)
-                        #     if position == intercept_enemie(pos_enemy):
-                        #         print("Attack>!!")
-                        #         key = attack(position)
+                
                     else:
                         key = walk(position,state['exit'])
                         if(position == pos_ant):
@@ -121,7 +97,16 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 if way == []: 
                     put_bomb = False
 
-                if(have_walls == True):
+                if pos_enemy != None:
+                    key = walk(position,pos_enemy)
+                    if(position == pos_ant):
+                        if wall_is_breakable(position,mapa):
+                            key = attack(position)
+                        else:
+                            key = change_path(position,mapa)
+                        
+                
+                if(have_walls == True and pos_enemy == None):
                     wall_closer = get_walls(state,position,mapa,walls)
                     key = walk(position,wall_closer)
                     if(position == pos_ant):
@@ -132,16 +117,18 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                     if(calc_distance(position,bomb) > 5):
                        put_bomb = False
                 
-                if(pos_enemy != None):
-                    if(calc_distance(position,pos_enemy) < 4 and not put_bomb):
-                        enemy_on_sight = True
-                        key = attack(position)
-                    else:
-                        enemy_on_sight = False
-                
-                if(calc_distance(position,wall_closer) == 1 and not put_bomb):
-                    print("Debug")
+
+                if(calc_distance(position,pos_enemy) < 4 and not put_bomb):
+                    enemy_on_sight = True
                     key = attack(position)
+                else:
+                    enemy_on_sight = False
+                
+
+                if pos_enemy == None:
+                    if(calc_distance(position,wall_closer) == 1 and not put_bomb):
+                        print("Debug")
+                        key = attack(position)
 
                     
                 pos_ant = position
@@ -166,6 +153,19 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
 
             # Next line is not needed for AI agent
         #    pygame.display.flip()
+
+def wall_is_breakable(position,mapa):
+    x,y = position
+    if mapa.is_blocked((x+1,y)):
+        return True
+    elif mapa.is_blocked((x-1,y)):
+        return True
+    elif mapa.is_blocked((x,y+1)):
+        return True
+    elif mapa.is_blocked((x,y-1)):
+        return True
+    else:
+        return False
 
 def intercept_enemie(pos_enemy):
     x,y = pos_enemy
