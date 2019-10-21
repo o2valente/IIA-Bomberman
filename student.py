@@ -47,6 +47,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
         spawn = (1, 1)
         enemy_on_sight = False
         waiting_for_enemies = False
+        wait_for_bomb = False
 
         while True:
             try:
@@ -75,6 +76,16 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                     print("No walls")
                     if len(enemies) != 0:
                         have_walls = False
+<<<<<<< HEAD
+                        if( not put_bomb and not power_up_found):
+                            key = walk(position,find_power_up(state,mapa))
+                            if(position == pos_ant):
+                                key = change_path(position,mapa)
+                        elif  not put_bomb:
+                            key = walk(position,intercept_enemie(pos_enemy))
+                            if(position == pos_ant):
+                                key = change_path(position,mapa)
+=======
                         if not put_bomb and not power_up_found:
                             key = walk(position, find_power_up(state, mapa))
                             if position == pos_ant:
@@ -106,6 +117,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                         #     if position == intercept_enemie(pos_enemy):
                         #         print("Attack>!!")
                         #         key = attack(position)
+>>>>>>> 7aff0eaec70d8ccde404e3bceb56fc2345071d7a
                     else:
                         key = walk(position, state['exit'])
                         if position == pos_ant:
@@ -127,27 +139,47 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
 
                 if put_bomb:
                     key = way.pop()
+<<<<<<< HEAD
+                    if(calc_distance(position,bomb) > 5):
+                       put_bomb = False
+                       wait_for_bomb = True
+                
+                if(pos_enemy != None):
+                    if(calc_distance(position,pos_enemy) < 4 and not put_bomb and len(way) > 4):
+=======
                     if calc_distance(position, bomb) > 5:
                         put_bomb = False
 
                 if pos_enemy is not None:
                     if calc_distance(position, pos_enemy) < 4 and not put_bomb:
+>>>>>>> 7aff0eaec70d8ccde404e3bceb56fc2345071d7a
                         enemy_on_sight = True
                         key = attack(position)
                     else:
                         enemy_on_sight = False
+<<<<<<< HEAD
+                
+                if(calc_distance(position,wall_closer) == 1 and not put_bomb):
+=======
 
                 if calc_distance(position, wall_closer) == 1 and not put_bomb:
                     print("Debug")
+>>>>>>> 7aff0eaec70d8ccde404e3bceb56fc2345071d7a
                     key = attack(position)
 
                 pos_ant = position
 
                 if put_bomb is False and key != "":
                     way.append(memorize_path(key))
+<<<<<<< HEAD
+                
+                if(key == None or wait_for_bomb == True):
+=======
 
                 if key is None:
+>>>>>>> 7aff0eaec70d8ccde404e3bceb56fc2345071d7a
                     key = ""
+                    wait_for_bomb = False
 
                 print(key)
 
@@ -164,6 +196,17 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
             # Next line is not needed for AI agent
         #    pygame.display.flip()
 
+<<<<<<< HEAD
+def intercept_enemie(pos_enemy):
+    x,y = pos_enemy
+    if x <= 47 :
+        return ( x + 3 , y )
+    elif x > 46 and y >= 2 :
+        return (49 , y - (x + 3 - 49))
+    else :
+        return (x - (3 - y), 1 )
+=======
+>>>>>>> 7aff0eaec70d8ccde404e3bceb56fc2345071d7a
 
 def intercept_enemy(pos_enemy):
     x, y = pos_enemy
