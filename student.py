@@ -7,6 +7,7 @@ import os
 import math
 
 from mapa import Map
+
 # Next 2 lines are not needed for AI agent
 # import pygame
 
@@ -14,8 +15,9 @@ from mapa import Map
 
 direction = True
 put_bomb = False
-bomb = (0,0)
+bomb = (0, 0)
 power_up_found = False
+
 
 async def agent_loop(server_address="localhost:8000", agent_name="student"):
     async with websockets.connect(f"ws://{server_address}/player") as websocket:
@@ -39,10 +41,10 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
         global bomb
         global power_up_found
 
-        pos_ant = (0,0)
+        pos_ant = (0, 0)
         way = []
         have_walls = True
-        spawn = (1,1)
+        spawn = (1, 1)
         enemy_on_sight = False
         waiting_for_enemies = False
 
@@ -52,40 +54,38 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                     await websocket.recv()
                 )  # receive game state, this must be called timely or your game will get out of sync with the server4
 
-
-######################################################################################################################################
+                ######################################################################################################################################
                 position = state['bomberman']
-                x,y = position
+                x, y = position
                 walls = state['walls']
                 enemies = state['enemies']
                 power_ups = state['powerups']
 
-
                 if len(enemies) == 0:
                     pos_enemy = None
                 else:
-                    pos_enemy = get_enemies(state,position,enemies)['pos']
-                
-                if find_power_up(state,mapa) is None:
+                    pos_enemy = get_enemies(state, position, enemies)['pos']
+
+                if find_power_up(state, mapa) is None:
                     power_up_found = True
                 else:
                     power_up_found = False
 
-                if(len(walls) == 0):
+                if len(walls) == 0:
                     print("No walls")
-                    if(len(enemies) != 0):
+                    if len(enemies) != 0:
                         have_walls = False
-                        if( not put_bomb and not power_up_found):
-                            key = walk(position,find_power_up(state,mapa))
-                            if(position == pos_ant):
-                                key = change_path(position,mapa)
-                        elif  not put_bomb: # and position != [1,1]
-                            key = walk(position,intercept_enemie(pos_enemy))
-                            
+                        if not put_bomb and not power_up_found:
+                            key = walk(position, find_power_up(state, mapa))
+                            if position == pos_ant:
+                                key = change_path(position, mapa)
+                        elif not put_bomb:  # and position != [1,1]
+                            key = walk(position, intercept_enemy(pos_enemy))
+
                             # key = walk(position,intercept_enemie(pos_enemy))
                             # key = walk(position,pos_enemy)
-                            if(position == pos_ant):
-                                key = change_path(position,mapa)
+                            if position == pos_ant:
+                                key = change_path(position, mapa)
                         # elif position == [1, 1] :
                         #     print(way)
                         #     # if calc_distance(position,pos_enemy) < 3:  
@@ -98,9 +98,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                         #     # way.append("a")
                         #     # way.append("a")
                         #     # way.append("a")
-                            
-                            
-                            
+
                         #         # waiting_for_enemies = False
                         #     key = walk(position,intercept_enemie(pos_enemy))
                         #     if(position == pos_ant):
@@ -109,52 +107,51 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                         #         print("Attack>!!")
                         #         key = attack(position)
                     else:
-                        key = walk(position,state['exit'])
-                        if(position == pos_ant):
-                            key = change_path(position,mapa)
+                        key = walk(position, state['exit'])
+                        if position == pos_ant:
+                            key = change_path(position, mapa)
 
                 if len(walls) == 0:
                     have_walls = False
                 else:
                     have_walls = True
-                
-                if way == []: 
+
+                if not way:
                     put_bomb = False
 
-                if(have_walls == True):
-                    wall_closer = get_walls(state,position,mapa,walls)
-                    key = walk(position,wall_closer)
-                    if(position == pos_ant):
-                        key = change_path(position,mapa)
+                if have_walls:
+                    wall_closer = get_walls(state, position, mapa, walls)
+                    key = walk(position, wall_closer)
+                    if position == pos_ant:
+                        key = change_path(position, mapa)
 
-                if(put_bomb == True):
+                if put_bomb:
                     key = way.pop()
-                    if(calc_distance(position,bomb) > 5):
-                       put_bomb = False
-                
-                if(pos_enemy != None):
-                    if(calc_distance(position,pos_enemy) < 4 and not put_bomb):
+                    if calc_distance(position, bomb) > 5:
+                        put_bomb = False
+
+                if pos_enemy is not None:
+                    if calc_distance(position, pos_enemy) < 4 and not put_bomb:
                         enemy_on_sight = True
                         key = attack(position)
                     else:
                         enemy_on_sight = False
-                
-                if(calc_distance(position,wall_closer) == 1 and not put_bomb):
+
+                if calc_distance(position, wall_closer) == 1 and not put_bomb:
                     print("Debug")
                     key = attack(position)
 
-                    
                 pos_ant = position
-                
-                if(put_bomb == False and key != ""):
+
+                if put_bomb is False and key != "":
                     way.append(memorize_path(key))
-                
-                if(key == None):
+
+                if key is None:
                     key = ""
 
                 print(key)
 
-###################################################################################################################################################33
+                # ##################################################################################################################################################
 
                 await websocket.send(
                     json.dumps({"cmd": "key", "key": key})
@@ -167,29 +164,33 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
             # Next line is not needed for AI agent
         #    pygame.display.flip()
 
-def intercept_enemie(pos_enemy):
-    x,y = pos_enemy
-    if x <= 42 :
-        return ( x + 7 , y )
-    elif x > 46 and y >= 3 :
-        return (49 , y - (x + 7 - 49))
-    else :
-        return (x - (7 - y), 1 )
 
-def find_power_up(state,mapa):
+def intercept_enemy(pos_enemy):
+    x, y = pos_enemy
+    if x <= 42:
+        return x + 7, y
+    elif x > 46 and y >= 3:
+        return 49, y - (x + 7 - 49)
+    else:
+        return x - (7 - y), 1
+
+
+def find_power_up(state, mapa):
     power_ups = state['powerups']
-    for power  in power_ups:
+    for power in power_ups:
         return power[0]
 
+
 def memorize_path(key):
-    if(key == "s"):
+    if key == "s":
         return "w"
-    if(key == "w"):
+    if key == "w":
         return "s"
-    if(key == "d"):
+    if key == "d":
         return "a"
-    if(key == "a"):
+    if key == "a":
         return "d"
+
 
 def attack(position):
     global put_bomb
@@ -198,85 +199,89 @@ def attack(position):
     bomb = position
     return "B"
 
-def change_path(position,mapa):
+
+def change_path(position, mapa):
     global direction
     direction = not direction
-    return stuck_on_wall(position,mapa)
-        
+    return stuck_on_wall(position, mapa)
 
-def walk(position,goal):
+
+def walk(position, goal):
     global direction
-    if direction == True :
-        return get_to(position,goal)
+    if direction:
+        return get_to(position, goal)
     else:
-        return get_to_y(position,goal)
+        return get_to_y(position, goal)
 
-def calc_distance(pos1,pos2):
-    x1,y1 = pos1
-    x2,y2 = pos2
-    return math.sqrt(pow(x2-x1,2) + pow(y2-y1,2))
 
-def get_to(pos1,pos2):
-    x,y = pos1
-    x_2,y_2 = pos2
+def calc_distance(pos1, pos2):
+    x1, y1 = pos1
+    x2, y2 = pos2
+    return math.sqrt(pow(x2 - x1, 2) + pow(y2 - y1, 2))
 
-    if(x < x_2):
+
+def get_to(pos1, pos2):
+    x, y = pos1
+    x_2, y_2 = pos2
+
+    if (x < x_2):
         return "d"
-    if(x > x_2):
+    if (x > x_2):
         return "a"
-    if(y > y_2):
+    if (y > y_2):
         return "w"
-    if(y < y_2):
+    if (y < y_2):
         return "s"
 
 
-def get_to_y(pos1,pos2):
-    x,y = pos1
-    x_2,y_2 = pos2
+def get_to_y(pos1, pos2):
+    x, y = pos1
+    x_2, y_2 = pos2
 
-    if(y > y_2):
+    if y > y_2:
         return "w"
-    if(y < y_2):
+    if y < y_2:
         return "s"
-    if(x < x_2):
+    if x < x_2:
         return "d"
-    if(x > x_2):
+    if x > x_2:
         return "a"
-    
 
-def stuck_on_wall(pos,mapa):
-    x,y = pos
-    if not mapa.is_stone((x+1,y)):
+
+def stuck_on_wall(pos, mapa):
+    x, y = pos
+    if not mapa.is_stone((x + 1, y)):
         return "d"
-    if not mapa.is_stone((x,y+1)):
+    if not mapa.is_stone((x, y + 1)):
         return "w"
-    if not mapa.is_stone((x-1,y)):
+    if not mapa.is_stone((x - 1, y)):
         return "a"
-    if not mapa.is_stone((x,y-1)):
+    if not mapa.is_stone((x, y - 1)):
         return "s"
 
-def get_walls(state,position,mapa,walls):
+
+def get_walls(state, position, mapa, walls):
     min = 10000
     wall_len = len(state['walls'])
-    if(wall_len != 0):
+    if wall_len != 0:
         for wall in walls:
             if not mapa.is_stone(wall):
-                if(calc_distance(position,wall) < min):
-                    min = calc_distance(position,wall)
+                if calc_distance(position, wall) < min:
+                    min = calc_distance(position, wall)
                     wall_closer = wall
         return wall_closer
 
-def get_enemies(state,position,enemies):
+
+def get_enemies(state, position, enemies):
     min = 10000
-    if(len(state['enemies']) != 0):
+    if len(state['enemies']) != 0:
         for enemy in enemies:
-            if calc_distance(position,enemy['pos']) < min:
-                min = calc_distance(position,enemy['pos'])
+            if calc_distance(position, enemy['pos']) < min:
+                min = calc_distance(position, enemy['pos'])
                 enemy_closer = enemy
     else:
         enemy_closer = None
     return enemy_closer
-
 
 
 # DO NOT CHANGE THE LINES BELLOW

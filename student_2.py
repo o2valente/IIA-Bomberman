@@ -53,7 +53,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 )  # receive game state, this must be called timely or your game will get out of sync with the server4
 
 
-######################################################################################################################################
+# #####################################################################################################################################
                 position = state['bomberman']
                 x,y = position
                 walls = state['walls']
