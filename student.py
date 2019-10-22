@@ -48,6 +48,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
         enemy_on_sight = False
         waiting_for_enemies = False
         wait_for_bomb = False
+        fase = 1
 
         while True:
             try:
@@ -56,99 +57,100 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 )  # receive game state, this must be called timely or your game will get out of sync with the server4
 
                 ######################################################################################################################################
-                position = state['bomberman']
-                x, y = position
-                walls = state['walls']
-                enemies = state['enemies']
-                power_ups = state['powerups']
+                position = state['bomberman']                                                               # Bomberman's position
+                x, y = position                                                                              
 
-                if len(enemies) == 0:
+                walls = state['walls']                                                                      # Walls's position
+                enemies = state['enemies']                                                                  # Enemy's position
+                power_ups = state['powerups']                                                               # Power-Ups's position
+
+                if len(enemies) == 0:                                                                       # Get position of closest enemy
                     pos_enemy = None
                 else:
                     pos_enemy = get_enemies(state, position, enemies)['pos']
 
-                if find_power_up(state, mapa) is None:
+                if find_power_up(state, mapa) is None:                                                       # Already found power-up?
                     power_up_found = True
                 else:
                     power_up_found = False
 
-                if len(walls) == 0:
+################################## No Walls ########################################################################
+                if len(walls) == 0:                                                                         # If walls are all destroyed
                     print("No walls")
-                    if len(enemies) != 0:
-                        have_walls = False
-                        if not put_bomb and not power_up_found:
-                            key = walk(position,find_power_up(state,mapa))
-                            if position == pos_ant:
-                                key = change_path(position,mapa)
-                        elif  not put_bomb:
-                            key = walk(position,intercept_enemie(pos_enemy))
-                            if position == pos_ant:
-                                key = change_path(position,mapa)
-                        if not put_bomb and not power_up_found:
-                            key = walk(position, find_power_up(state, mapa))
-                            if position == pos_ant:
-                                key = change_path(position, mapa)
-                        elif not put_bomb:  # and position != [1,1]
-                            key = walk(position, intercept_enemy(pos_enemy))
+                    have_walls = False
 
-                            # key = walk(position,intercept_enemie(pos_enemy))
-                            # key = walk(position,pos_enemy)
+                    if len(enemies) != 0:                                                                   # If there are still enemies
+                        if not put_bomb and not power_up_found:                                             # if bomb is not planted and power-up not found yet
+                            key = walk(position,find_power_up(state,mapa))                                  # Get power-up
                             if position == pos_ant:
-                                key = change_path(position, mapa)
-                    else:
-                        key = walk(position, state['exit'])
+                                key = change_path(position,mapa)
+                        elif  not put_bomb and position != [1,1]:                                                                 # If power-up is found
+                            print("What am I doing?")
+                            key = walk(position,[1,1])                                                      # Walk to spawn
+                            if position == pos_ant:
+                                key = change_path(position,mapa)
+                        elif position == [1,1] and calc_distance(position, pos_enemy) > 4 and not put_bomb:
+                            waiting_for_enemies = True
+                        elif position == [1,1] and calc_distance(position,pos_enemy) < 4:
+                            if fase == 1:
+                                key = "s"
+                            elif fase == 2:
+                                key = "s" 
+                            elif fase == 3:
+                                key = "d"
+                            fase += 1
+                    else:                                                                                   # If enemies are all dead  
+                        key = walk(position, state['exit'])                                                 # Go to exit
                         if position == pos_ant:
                             key = change_path(position, mapa)
+                
+###############################################################################################################
+############################################### With Walls ####################################################
+                else:                  # If walls exist
+                
+                    if not way:
+                        put_bomb = False
 
-                if len(walls) == 0:
-                    have_walls = False
-                else:
-                    have_walls = True
+                    wall_closer = get_walls(state, position, mapa, walls)                               # Get closer wall
 
-                if not way:
-                    put_bomb = False
-
-                if have_walls:
-                    wall_closer = get_walls(state, position, mapa, walls)
-                    key = walk(position, wall_closer)
+                    key = walk(position, wall_closer)                                                   # walk to the closest wall
                     if position == pos_ant:
                         key = change_path(position, mapa)
 
-                if put_bomb:
-                    key = way.pop()
-                    if calc_distance(position, bomb) > 5:
-                       put_bomb = False
-                       wait_for_bomb = True
-                
-                if pos_enemy is not None:
-                    if calc_distance(position, pos_enemy) < 4 and not put_bomb and len(way) > 4:
-                        if calc_distance(position, bomb) > 5:
+                    if put_bomb:                                                                        # Run from bomb
+                        key = way.pop()
+                        # key = walk(position,is_safe(position,mapa,enemies,0,False))
+                        if calc_distance(position, bomb) > 4:
                             put_bomb = False
+                            wait_for_bomb = True
+                    
+                    if pos_enemy is not None:                                                           # If run into an enemy, attack
+                        if calc_distance(position, pos_enemy) < 3 and not put_bomb and len(way) > 4:
+                            enemy_on_sight = True
+                            key = attack(position)
+                        else:
+                            enemy_on_sight = False
+                            # if calc_distance(position, bomb) > 5:
+                            #     put_bomb = False
 
-                if pos_enemy is not None:
-                    if calc_distance(position, pos_enemy) < 4 and not put_bomb:
-                        enemy_on_sight = True
+                    if calc_distance(position, wall_closer) == 1 and not put_bomb and len(way) > 4:     # attack a wall
                         key = attack(position)
-                    else:
-                        enemy_on_sight = False
 
-                if calc_distance(position, wall_closer) == 1 and not put_bomb:
-                    print("Debug")
-                    key = attack(position)
+####################################################################################################################
+############################################ WITH OR WITHOUT WALLS #################################################
+                pos_ant = position                                                                      # Guardar posição anterior
 
-                pos_ant = position
-
-                if put_bomb is False and key != "":
+                if put_bomb is False and key != "":                                                     #Memorizar caminho
                     way.append(memorize_path(key))
                 
-                if key is None or wait_for_bomb == True:
+                if key is None or waiting_for_enemies == True:                                                # Ficar parado
                     if key is None:
                         key = ""
                         wait_for_bomb = False
 
                 print(key)
 
-                # ##################################################################################################################################################
+##################################################################################################################################################
 
                 await websocket.send(
                     json.dumps({"cmd": "key", "key": key})
@@ -179,6 +181,67 @@ def intercept_enemy(pos_enemy):
     else:
         return x - (7 - y), 1
 
+# def is_safe(position,mapa,enemies,step,turn_back):
+#     x,y = position
+#     step += 1
+#     if step == 4:
+#         return position
+#     if not mapa.is_stone((x+1,y)) and not mapa.is_blocked((x+1,y)) and turn_back == False:
+#         print("Direita")
+#         return is_safe((x+1,y),mapa,enemies,step,turn_back)
+#     elif not mapa.is_stone((x-1,y)) and not mapa.is_blocked((x-1,y)):
+#         turn_back = True
+#         print("Esquerda")
+#         return is_safe((x-1,y),mapa,enemies,step,turn_back)
+#     elif not mapa.is_stone((x,y+1)) and not mapa.is_blocked((x,y+1)):
+#         turn_back = False
+#         print("Down")
+#         return is_safe((x,y+1),mapa,enemies,step,turn_back)
+#     elif not mapa.is_stone((x,y-1)) and not mapa.is_blocked((x,y-1)):
+#         turn_back = False
+#         print("Up")
+#         return is_safe((x,y-1),mapa,enemies,step,turn_back)
+
+# def run_way(position,mapa):
+#     x,y = position
+#     if mapa.map[x,y+1] == 1 and mapa.map[x,y-1] == 1:
+#         if mapa.map[x-1,y+1] == 1:
+#             return run_to_up()
+#         else:
+#             return run_to_down()
+#     else:
+#         if mapa.map[x-1,y] == 1:
+#             return run_to_right()
+#         else:
+#             return run_to_left()
+
+# def run_to_up():
+#     run = []
+#     run.append("w")
+#     run.append("w")
+#     run.append("a")
+#     return run
+
+# def run_to_down():
+#     run = []
+#     run.append("s")
+#     run.append("s")
+#     run.append("a")
+#     return run
+
+# def run_to_right():
+#     run = []
+#     run.append("s")
+#     run.append("d")
+#     run.append("d")
+#     return run
+
+# def run_to_left():
+#     run = []
+#     run.append("s")
+#     run.append("a")
+#     run.append("a")
+#     return run
 
 def find_power_up(state, mapa):
     power_ups = state['powerups']
