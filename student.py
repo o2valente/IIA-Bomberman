@@ -5,6 +5,7 @@ import websockets
 import getpass
 import os
 import math
+import astar
 
 from mapa import Map
 
@@ -58,7 +59,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
 
                 ######################################################################################################################################
                 position = state['bomberman']                                                               # Bomberman's position
-                x, y = position                                                                              
+                x, y = position
 
                 walls = state['walls']                                                                      # Walls's position
                 enemies = state['enemies']                                                                  # Enemy's position
@@ -84,7 +85,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                             key = walk(position,find_power_up(state,mapa))                                  # Get power-up
                             if position == pos_ant:
                                 key = change_path(position,mapa)
-                        elif  not put_bomb and position != [1,1]:                                                                 # If power-up is found
+                        elif not put_bomb and position != [1,1]:                                                                 # If power-up is found
                             print("What am I doing?")
                             key = walk(position,[1,1])                                                      # Walk to spawn
                             if position == pos_ant:
@@ -95,25 +96,24 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                             if fase == 1:
                                 key = "s"
                             elif fase == 2:
-                                key = "s" 
+                                key = "s"
                             elif fase == 3:
                                 key = "d"
                             fase += 1
-                    else:                                                                                   # If enemies are all dead  
+                    else:                                                                                   # If enemies are all dead
                         key = walk(position, state['exit'])                                                 # Go to exit
                         if position == pos_ant:
                             key = change_path(position, mapa)
-                
+
 ###############################################################################################################
 ############################################### With Walls ####################################################
                 else:                  # If walls exist
-                
+
                     if not way:
                         put_bomb = False
 
                     wall_closer = get_walls(state, position, mapa, walls)                               # Get closer wall
-
-                    key = walk(position, wall_closer)                                                   # walk to the closest wall
+                    key = astar_path(mapa.map, position, wall_closer)                                          # walk to the closest wall
                     if position == pos_ant:
                         key = change_path(position, mapa)
 
@@ -123,7 +123,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                         if calc_distance(position, bomb) > 4:
                             put_bomb = False
                             wait_for_bomb = True
-                    
+
                     if pos_enemy is not None:                                                           # If run into an enemy, attack
                         if calc_distance(position, pos_enemy) < 3 and not put_bomb and len(way) > 4:
                             enemy_on_sight = True
@@ -133,7 +133,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                             # if calc_distance(position, bomb) > 5:
                             #     put_bomb = False
 
-                    if calc_distance(position, wall_closer) == 1 and not put_bomb and len(way) > 4:     # attack a wall
+                    if calc_distance(position, wall_closer) == 1 and not put_bomb:     # attack a wall
                         key = attack(position)
 
 ####################################################################################################################
@@ -142,7 +142,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
 
                 if put_bomb is False and key != "":                                                     #Memorizar caminho
                     way.append(memorize_path(key))
-                
+
                 if key is None or waiting_for_enemies == True:                                                # Ficar parado
                     if key is None:
                         key = ""
@@ -162,6 +162,13 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
 
             # Next line is not needed for AI agent
         #    pygame.display.flip()
+
+def astar_path(mapa, pos, destiny):
+    path = astar.astar(mapa, pos, destiny)
+    if len(path) <= 1 :
+        return ""
+    return walk(path[0], path[1])
+    
 
 def intercept_enemie(pos_enemy):
     x,y = pos_enemy
