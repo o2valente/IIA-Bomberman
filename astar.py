@@ -15,7 +15,7 @@ class Node():
         return self.position == other.position
 
 
-def astar(maze, start, end):
+def astar(maze, start, end,enemies):
     """Returns a list of tuples as a path from the given start to the given end in the given maze"""
 
     # Create start and end node
@@ -67,7 +67,7 @@ def astar(maze, start, end):
                 continue
 
             # Make sure walkable terrain
-            if maze[node_position[0]][node_position[1]] != 0:
+            if maze[node_position[0]][node_position[1]] != 0 or [node_position[0], node_position[1]] in node_position:
                 continue
 
             # Create new node
