@@ -249,11 +249,13 @@ def is_between_walls(mapa, pos):
     return False
 
 
-def has_enemy(location, enemies):
+def has_enemy(location,enemies):
     for enemy in enemies:
-        if location == enemy['pos']:
+        enemy = tuple(enemy['pos'])
+        if location == enemy:
             return True
-    return False
+    return False    
+
 
 
 def find_power_up(state):
