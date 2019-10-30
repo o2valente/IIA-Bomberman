@@ -31,9 +31,13 @@ def astar(maze, start, end,enemies):
     # Add the start node
     open_list.append(start_node)
 
+    break_loop = 0
     # Loop until you find the end
     while len(open_list) > 0:
+        if break_loop >= 100:
+            break
 
+        break_loop += 1
         # Get the current node
         current_node = open_list[0]
         current_index = 0
