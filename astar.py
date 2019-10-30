@@ -35,10 +35,11 @@ def astar(maze, start, end,enemies):
     # Loop until you find the end
     while len(open_list) > 0:
 
-        count += 1
         print("Contador: ",count)
         if count == 150:
             break
+
+        count += 1
         # Get the current node
         current_node = open_list[0]
         current_index = 0
@@ -62,7 +63,6 @@ def astar(maze, start, end,enemies):
 
         # Generate children
         children = []
-        count = 0
         for new_position in [(0, -1), (0, 1), (-1, 0), (1, 0)]: # Adjacent squares
 
             # Get node position

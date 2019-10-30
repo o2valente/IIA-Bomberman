@@ -160,7 +160,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                             put_bomb = False
                             run = False
 
-                    if len(has_Oneals(enemies))>0 and not put_bomb:
+                    if len(has_Oneals(enemies)) > 0 and not put_bomb:
                         attack_distance = 3
                         key = astar_path(mapa.map, position, find_Oneal(enemies)['pos'], True, enemies)
 
@@ -180,12 +180,11 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                         print("Sou burro e nao ataco")
                         key = attack()
 
-                if step >= 1500 and len(has_Oneals(enemies)) > 0 and give_up == False:
+                if step >= 400 and len(has_Oneals(enemies)) > 0 and give_up == False:
                     give_up = True
                     key = astar_path(mapa.map,position,wall_closer,False,enemies)
 
                 if key is None or waiting_for_enemies:  # Ficar parado
-                    print(calc_distance(position,pos_enemy))
                     if key == "" and calc_distance(position,pos_enemy) < attack_distance:
                         key = attack()
                     elif key is None:
@@ -242,12 +241,15 @@ def astar_path(mapa, pos, destiny, close, enemies):
     if pos == destiny:
         return ""
     path = astar.astar(mapa, pos, destiny, [x['pos'] for x in enemies])
-    if len(path) <= 1 and close:
-        return walk(pos, destiny)
-    elif len(path) <= 1 or has_enemy(path[1], enemies) or len(path) >= 3 and has_enemy(path[2], enemies):
-        return ""
+    if path == None: 
+        return walk(pos,[1,1])
+    else:
+        if len(path) <= 1 and close:
+            return walk(pos, destiny)
+        elif len(path) <= 1 or has_enemy(path[1], enemies) or len(path) >= 3 and has_enemy(path[2], enemies):
+            return ""
 
-    return walk(path[0], path[1])
+        return walk(path[0], path[1])
 
 
 def has_Ballooms(enemies):
