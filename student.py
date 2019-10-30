@@ -58,6 +58,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
         level_ant = 1
         wait_time = 5
         attack_distance = 3
+        give_up = False
 
         while True:
             try:
@@ -73,7 +74,8 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                     power_ups = state['powerups']  # Power-Ups's position
                     level = state['level']  # Get Level
                     bombs = state['bombs']
-                    exit = state['exit']
+                    exit_pos = state['exit']
+                    step = state['step']
                 except:
                     pass
                 if bombs:
@@ -92,7 +94,6 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 if find_power_up(power_ups) is None:  # Already found power-up?
                     power_up_found = True
                 else:
-                    print(power_ups)
                     power_up_found = False
 
                 ################################## No Walls ########################################################################
@@ -113,7 +114,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
 
                         if pos_enemy is not None:
                             if calc_distance(position, pos_enemy) < 3 and not put_bomb and on_same_line(position,
-                                                                                                        pos_enemy):
+                                                                                                        pos_enemy,mapa):
                                 key = attack()
 
                     if len(enemies) != 0:  # If there are still enemies
@@ -123,16 +124,16 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                             elif position == [1, 1] and calc_distance(position, pos_enemy) > 3 and not put_bomb:
                                 waiting_for_enemies = True
                             elif calc_distance(position, pos_enemy) < 4 and not put_bomb and on_same_line(position,
-                                                                                                          pos_enemy):
+                                                                                                          pos_enemy,mapa):
                                 key = attack()
                         else:
                             attack_distance = 3
                             key = astar_path(mapa.map, position, pos_enemy, True, enemies)
                             if calc_distance(position, pos_enemy) < attack_distance and not put_bomb and on_same_line(
-                                    position, pos_enemy):
+                                    position, pos_enemy,mapa):
                                 key = attack()
                     else:  # If enemies are all dead
-                        key = astar_path(mapa.map, position, exit, True, enemies)  # Go to exit
+                        key = astar_path(mapa.map, position, exit_pos, True, enemies)  # Go to exit
 
                 ###############################################################################################################
                 ############################################### With Walls ####################################################
@@ -155,17 +156,15 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                         if position == run_to and wait < wait_time:
                             wait += 1
                             key = ""
-                            print("Wait")
                         elif position == run_to:
                             put_bomb = False
                             run = False
 
                     if has_Oneals(enemies) and not put_bomb:
-                        attack_distance = 4
+                        attack_distance = 3
                         key = astar_path(mapa.map, position, find_Oneal(enemies)['pos'], True, enemies)
 
                     if calc_distance(position, wall_closer) == 1 and not put_bomb:  # attack a wall
-                        print("Attack parede! ")
                         key = attack()
 
                 ####################################################################################################################
@@ -177,25 +176,23 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
 
                 if pos_enemy is not None:
                     if calc_distance(position, pos_enemy) < attack_distance and not put_bomb and on_same_line(position,
-                                                                                                              pos_enemy):
+                                                                                                              pos_enemy,mapa):
+                        print("Sou burro e nao ataco")
                         key = attack()
 
+                if step >= 1500 and has_Oneals(enemies) and give_up == False:
+                    give_up = True
+                    key = astar_path(mapa.map,position,wall_closer,False,enemies)
+
                 if key is None or waiting_for_enemies:  # Ficar parado
-                    if key is None:
+                    print(calc_distance(position,pos_enemy))
+                    if key == "" and calc_distance(position,pos_enemy) < attack_distance:
+                        key = attack()
+                    elif key is None:
                         key = ""
 
+                print("Distancia de ataque",attack_distance)
                 print("key: ", key)
-
-                if level != level_ant:
-                    direction = True
-                    put_bomb = False
-                    wait = 0
-                    power_up_found = False
-                    waiting_for_enemies = False
-                    run = False
-                    wait_time = 6
-
-                level_ant = level
 
                 ##################################################################################################################################################
 
@@ -211,15 +208,34 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
         #    pygame.display.flip()
 
 
-def on_same_line(pos, dest):
+def on_same_line(pos, dest,mapa):
     x, y = pos
     dx, dy = dest
-    if x == dx:
+    if x == dx and not wall_blocking(pos,dest,mapa):
+        print("Estou na mesma linha do x")
         return True
-    if y == dy:
+    if y == dy and not wall_blocking(pos,dest,mapa):
+        print("Estou na mesma linha do y")
         return True
 
+    print("Nao na mesma linha")
     return False
+
+def wall_blocking(pos,dest,mapa):
+    x,y = pos
+    dx,dy = dest
+
+    if x == dx:
+        for i in range(y,dy):
+            if mapa.map[x][i] == 1:
+                return True
+    elif y == dy:
+        for i in range(x,dx):
+            if mapa.map[i][y] == 1:
+                return True
+
+    return False
+
 
 
 def astar_path(mapa, pos, destiny, close, enemies):

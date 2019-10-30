@@ -57,6 +57,7 @@ def astar(maze, start, end,enemies):
 
         # Generate children
         children = []
+        count = 0
         for new_position in [(0, -1), (0, 1), (-1, 0), (1, 0)]: # Adjacent squares
 
             # Get node position
@@ -70,6 +71,14 @@ def astar(maze, start, end,enemies):
             if maze[node_position[0]][node_position[1]] != 0 or [node_position[0], node_position[1]] in node_position:
                 continue
 
+            count += 1
+
+            print("CONTADOR CARALHO: ",count)
+            if count % 10 == 0:
+                print(maze)
+
+            if count >= 150:
+                break
             # Create new node
             new_node = Node(current_node, node_position)
 
