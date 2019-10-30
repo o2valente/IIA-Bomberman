@@ -160,7 +160,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                             put_bomb = False
                             run = False
 
-                    if has_Oneals(enemies) and not put_bomb:
+                    if len(has_Oneals(enemies))>0 and not put_bomb:
                         attack_distance = 3
                         key = astar_path(mapa.map, position, find_Oneal(enemies)['pos'], True, enemies)
 
@@ -180,7 +180,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                         print("Sou burro e nao ataco")
                         key = attack()
 
-                if step >= 1500 and has_Oneals(enemies) and give_up == False:
+                if step >= 1500 and len(has_Oneals(enemies)) > 0 and give_up == False:
                     give_up = True
                     key = astar_path(mapa.map,position,wall_closer,False,enemies)
 
@@ -258,10 +258,11 @@ def has_Ballooms(enemies):
 
 
 def has_Oneals(enemies):
+    oneals = []
     for enemy in enemies:
         if enemy['name'] == "Oneal":
-            return True
-    return False
+            oneals.append(enemy)
+    return oneals
 
 
 def find_Oneal(enemies):
