@@ -6,11 +6,11 @@ import getpass
 import os
 import math
 import astar
+import random
 
 from mapa import Map
 
 # Next 2 lines are not needed for AI agent
-# import pygame
 
 # pygame.init()
 
@@ -291,18 +291,21 @@ def wall_blocking(pos, dest, mapa):
 
     return False
 
+def random_key():
+    key_list = ["a","s","d","w"]
+    return random.choice(key_list)
 
 def astar_path(mapa, pos, destiny, close, enemies, way):
     if pos == destiny:
         return ""
     path = astar.astar(mapa, pos, destiny, [x['pos'] for x in enemies])
     if path is None:
-        path = reversed(way)
+        return random_key()
     else:
         if len(path) <= 1 and close:
             return walk(pos, destiny)
         elif len(path) <= 1 or has_enemy(path[1], enemies) or len(path) >= 3 and has_enemy(path[2], enemies):
-            return ""
+            return random_key()
 
     return walk(path[0], path[1])
 
