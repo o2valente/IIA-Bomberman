@@ -170,24 +170,6 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                         wait = 0
                         run = True
 
-                    if put_bomb and run:  # Run from bomb and wait for explosion
-                        key = astar_path(mapa.map, position, run_to, True, enemies, way)
-                        if position == [1, 1]:
-                            run = False
-                            put_bomb = False
-                        if position == run_to and wait < wait_time and not got_Detonator:
-                            wait += 1
-                            key = ""
-                            print("Waiting")
-                        elif position == run_to and not got_Detonator:
-                            put_bomb = False
-                            run = False
-                        elif got_Detonator and position == run_to:
-                            put_bomb = False
-                            run = False
-                            Detonate = True
-                            print("Detonate")
-                        print("Running")
 
                     if has_Oneals(enemies) and not put_bomb:
                         attack_distance = 4
@@ -244,6 +226,25 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 if power_up_found and len(enemies) == 0 and exit_pos != []:
                     key = astar_path(mapa.map, position, exit_pos, True, enemies, way)  # Go to exit
                     print("All done, going to exit")
+
+                if put_bomb and run:  # Run from bomb and wait for explosion
+                        key = astar_path(mapa.map, position, run_to, True, enemies, way)
+                        if position == [1, 1]:
+                            run = False
+                            put_bomb = False
+                        if position == run_to and wait < wait_time and not got_Detonator:
+                            wait += 1
+                            key = ""
+                            print("Waiting")
+                        elif position == run_to and not got_Detonator:
+                            put_bomb = False
+                            run = False
+                        elif got_Detonator and position == run_to:
+                            put_bomb = False
+                            run = False
+                            Detonate = True
+                            print("Detonate")
+                        print("Running")
 
                 if Detonate:
                     key = "A"
