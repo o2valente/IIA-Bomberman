@@ -160,6 +160,9 @@ class Game:
         self._running = True
         self._score = INITIAL_SCORE
         self._bomberman = Bomberman(self.map.bomberman_spawn, self._initial_lives)
+        for powerup in range(1, self.initial_level):
+            self._bomberman.powerup(LEVEL_POWERUPS[powerup])
+        logger.debug("Bomberman Powerups: %s", self._bomberman.powers)
 
         self.next_level(self.initial_level)
 
@@ -245,6 +248,7 @@ class Game:
         if self._bomberman.lives > 0:
             logger.debug("RESPAWN")
             self._bomberman.respawn()
+            self._bombs = []
         else:
             self.stop()
 
@@ -279,7 +283,8 @@ class Game:
                         self._score += enemy.points()
                         self._enemies.remove(enemy)
 
-                self._bombs.remove(bomb)
+                if bomb in self._bombs:
+                    self._bombs.remove(bomb)
 
     async def next_frame(self):
         await asyncio.sleep(1.0 / GAME_SPEED)
