@@ -171,11 +171,11 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                         run = True
 
 
-                    if has_Oneals(enemies) and not put_bomb:
+                    if has_SmartEnemies(enemies) and not put_bomb:
                         attack_distance = 4
-                        key = astar_path(mapa.map, position, find_Oneal(position, enemies)['pos'], True, enemies, way)
+                        key = astar_path(mapa.map, position, find_SmartEnemies(position, enemies)['pos'], True, enemies, way)
                         print("Going to Oneal")
-                        if calc_distance(position, find_Oneal(position, enemies)['pos']) <= 5:
+                        if calc_distance(position, find_SmartEnemies(position, enemies)['pos']) <= 5:
                             count_oneal += 1
                             print("Stuck at Oneal")
                         if count_oneal >= 10:
@@ -318,18 +318,18 @@ def has_Ballooms(enemies):
     return False
 
 
-def has_Oneals(enemies):
+def has_SmartEnemies(enemies):
     for enemy in enemies:
-        if enemy['name'] == "Oneal":
+        if enemy['name'] == "Oneal" or enemy['name'] == "Minvo":
             return True
     return False
 
 
-def find_Oneal(position, enemies):
+def find_SmartEnemies(position, enemies):
     min = 10000
     if len(enemies) != 0:
         for enemy in enemies:
-            if enemy['name'] == "Oneal":
+            if enemy['name'] == "Oneal" or enemy['name'] == "Minvo":
                 if calc_distance(position, enemy['pos']) < min:
                     min = calc_distance(position, enemy['pos'])
                     enemy_closer = enemy
