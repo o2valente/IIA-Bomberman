@@ -190,7 +190,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                             count_oneal += 1
                         if count_oneal >= 10:
                             print("Leave Oneal")
-                            key = astar_path(mapa.map, position, walls[0], False, enemies, way)
+                            key = astar_path(mapa.map, position, enemies[0]['pos'], False, enemies, way)
                             count_oneal = 0
 
                     if calc_distance(position, wall_closer) == 1 and not put_bomb:  # attack a wall
@@ -276,7 +276,7 @@ def wall_blocking(pos, dest, mapa):
     return False
 
 
-def astar_path(mapa, pos, destiny, close, enemies,way):
+def astar_path(mapa, pos, destiny, close, enemies, way):
     if pos == destiny:
         return ""
     path = astar.astar(mapa, pos, destiny, [x['pos'] for x in enemies])
