@@ -90,7 +90,6 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 if find_power_up(power_ups) is None:  # Already found power-up?
                     power_up_reveal = True
                 else:
-                    print(power_ups)
                     power_up_reveal = False
                     POWER_UP = power_ups[0]
 
@@ -104,7 +103,6 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                     power_up_list.append(POWER_UP)
                     power_up_found = True
 
-
                 ################################## No Walls ########################################################################
                 if len(walls) == 0:  # If walls are all destroyed
                     if put_bomb and not run:  # Set running route
@@ -115,32 +113,40 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                     if put_bomb:  # Run from bomb and wait for explosion
                         if position == run_to and wait < 4 and not got_Detonator:
                             wait += 1
-                            key = ""
+                            print("Waititng for bomb without Detonator")
                         elif position == run_to and not got_Detonator:
                             put_bomb = False
                             run = False
+                            print("Done waiting for bomb without detonator")
                         elif got_Detonator and position == run_to:
                             put_bomb = False
                             run = False
                             Detonate = True
+                            print("Detonate")
+
                         key = astar_path(mapa.map, position, run_to, True, enemies, way)
+                        print("Running!")
 
                         if pos_enemy is not None:
                             if calc_distance(position, pos_enemy) < 3 and not put_bomb and on_same_line(position,
                                                                                                         pos_enemy,
                                                                                                         mapa):
                                 key = attack()
+                                print("Attack enemy!")
 
                     if len(enemies) != 0:  # If there are still enemies
                         if has_Ballooms(enemies):
                             if not put_bomb and position != [1, 1]:  # If power-up is found
                                 key = astar_path(mapa.map, position, [1, 1], True, enemies, way)
+                                print("Going to [1,1]")
                             elif position == [1, 1] and calc_distance(position, pos_enemy) > 3 and not put_bomb:
                                 waiting_for_enemies = True
+                                print("Waiting for enemies at [1,1]")
                             elif calc_distance(position, pos_enemy) < 4 and not put_bomb and on_same_line(position,
                                                                                                           pos_enemy,
                                                                                                           mapa):
                                 key = attack()
+                                print("Attack enemy!")
                         else:
                             attack_distance = 3
                             key = astar_path(mapa.map, position, pos_enemy, True, enemies, way)
@@ -149,6 +155,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                                 key = attack()
                     else:  # If enemies are all dead
                         key = astar_path(mapa.map, position, exit_pos, True, enemies, way)  # Go to exit
+                        print("Going to exit")
 
                 ###############################################################################################################
                 ############################################### With Walls ####################################################
@@ -156,13 +163,13 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
 
                     wall_closer = get_walls(position, mapa, walls)  # Get closer wall
                     key = astar_path(mapa.map, position, wall_closer, False, enemies, way)  # walk to the closest wall
+                    print("Going to closest Wall")
 
                     if put_bomb and not run:  # Set running route
                         run_to = run_away(mapa, position, enemies, walls, bomb, pos_enemy)
                         wait = 0
                         run = True
 
-                    print(run)
                     if put_bomb and run:  # Run from bomb and wait for explosion
                         key = astar_path(mapa.map, position, run_to, True, enemies, way)
                         if position == [1, 1]:
@@ -171,7 +178,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                         if position == run_to and wait < wait_time and not got_Detonator:
                             wait += 1
                             key = ""
-                            print("Wait")
+                            print("Waiting")
                         elif position == run_to and not got_Detonator:
                             put_bomb = False
                             run = False
@@ -179,43 +186,48 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                             put_bomb = False
                             run = False
                             Detonate = True
+                            print("Detonate")
+                        print("Running")
 
                     if has_Oneals(enemies) and not put_bomb:
                         attack_distance = 4
                         key = astar_path(mapa.map, position, find_Oneal(position, enemies)['pos'], True, enemies, way)
-                        if calc_distance(position, find_Oneal(position, enemies)['pos']) <= 6:
+                        print("Going to Oneal")
+                        if calc_distance(position, find_Oneal(position, enemies)['pos']) <= 5:
                             count_oneal += 1
+                            print("Stuck at Oneal")
                         if count_oneal >= 10:
                             print("Leave Oneal")
                             key = astar_path(mapa.map, position, wall_closer, False, enemies, way)
                             if calc_distance(position, wall_closer) <= 1:
+                                print("Arriving at wall, back to Oneal")
                                 count_oneal = 0
 
                     if calc_distance(position, wall_closer) == 1 and not put_bomb:  # attack a wall
                         key = attack()
+                        print("Attacking wall")
 
                 ####################################################################################################################
                 ############################################ WITH OR WITHOUT WALLS #################################################
 
                 power_up_reveal_before = power_up_reveal
 
-                print(power_up_list)
-
                 if not put_bomb and not power_up_reveal:  # if bomb is not planted and power-up not found yet
                     key = astar_path(mapa.map, position, find_power_up(power_ups), True, enemies, way)  # Get power-up
                     wait_time = 6
+                    print("Going to power_up")
 
                 if pos_enemy is not None:
                     if calc_distance(position, pos_enemy) < attack_distance and not put_bomb and on_same_line(position,
                                                                                                               pos_enemy,
                                                                                                               mapa):
                         key = attack()
+                        print("Attacking")
 
                 if key is None or waiting_for_enemies:  # Ficar parado
                     if key is None:
                         key = ""
-
-                print("key: ", key)
+                        print("Staying quiet")
 
                 if level != level_ant:
                     direction = True
@@ -229,16 +241,14 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
 
                 level_ant = level
 
-                print("Encontrei!! ", power_up_found)
-
-                print("Exit: ", exit_pos)
-
                 if power_up_found and len(enemies) == 0 and exit_pos != []:
                     key = astar_path(mapa.map, position, exit_pos, True, enemies, way)  # Go to exit
+                    print("All done, going to exit")
 
                 if Detonate:
                     key = "A"
 
+                print("key: ", key)
                 way.append(position)
 
                 ##################################################################################################################################################
@@ -287,7 +297,6 @@ def astar_path(mapa, pos, destiny, close, enemies, way):
         return ""
     path = astar.astar(mapa, pos, destiny, [x['pos'] for x in enemies])
     if path is None:
-        print("Going back")
         path = reversed(way)
     else:
         if len(path) <= 1 and close:
@@ -459,8 +468,6 @@ def find_power_up(power_ups):
         return power[0]
 
 
-
-
 def attack():
     global put_bomb
     put_bomb = True
@@ -470,8 +477,6 @@ def attack():
 def calc_distance(pos1, pos2):
     if pos1 is None or pos2 is None or pos1 == 0 or pos2 == 0:
         return 0
-    print("Pos 1:", pos1)
-    print("Pos 2: ", pos2)
     x1, y1 = pos1
     x2, y2 = pos2
     return math.sqrt(pow(x2 - x1, 2) + pow(y2 - y1, 2))
