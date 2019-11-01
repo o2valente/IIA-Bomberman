@@ -16,8 +16,6 @@ from mapa import Map
 
 direction = True
 put_bomb = False
-run = False
-wait = 0
 power_up_reveal = True
 
 
@@ -41,11 +39,12 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
         global direction
         global put_bomb
         global power_up_reveal
+        wait = 0
 
         waiting_for_enemies = False
         run = False
         level_ant = 1
-        wait_time = 5
+        wait_time = 7
         attack_distance = 3
         count_oneal = 0
         way = []
@@ -113,7 +112,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                         run = True
 
                     if put_bomb:  # Run from bomb and wait for explosion
-                        if position == run_to and wait < 4 and not got_Detonator:
+                        if position == run_to and wait < wait_time and not got_Detonator:
                             wait += 1
                             # print("Waititng for bomb without Detonator")
                         elif position == run_to and not got_Detonator:
@@ -161,34 +160,43 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
 
                 ###############################################################################################################
                 ############################################### With Walls ####################################################
-                else:  # If walls exist    
+                else:  # If walls exist
+                    print("RUN 1: ",run)    
 
                     wall_closer = get_walls(position, mapa, walls)  # Get closer wall
                     key = astar_path(mapa.map, position, wall_closer, False, enemies, way)  # walk to the closest wall
                     print("Going to closest Wall")
 
+                    print("RUN 2: ",run)
                     if put_bomb and not run:  # Set running route
                         run_to = run_away(mapa, position, enemies, walls, bomb, pos_enemy)
                         wait = 0
                         run = True
 
+                    print("RUN 3: ",run)   
+                
                     if put_bomb and run:  # Run from bomb and wait for explosion
                         key = astar_path(mapa.map, position, run_to, True, enemies, way)
                         if position == [1, 1]:
+                            print("Stopped Running")
                             run = False
                             put_bomb = False
                         if position == run_to and wait < wait_time and not got_Detonator:
                             wait += 1
                             key = ""
                             print("Waiting")
-                        elif position == run_to and not got_Detonator or wait >= wait_time and not got_Detonator:
+                        elif position == run_to and not got_Detonator or wait >= wait_time:
                             put_bomb = False
                             run = False
-                        elif got_Detonator and position == run_to or got_Detonator and wait >= wait_time:
+                        elif got_Detonator and position == run_to:
                             put_bomb = False
                             run = False
                             Detonate = True
                             print("Detonate")
+                        print("RUN 4: ",run)
+
+                        print("WAIT TIME: ", wait_time)
+                        print("WAIT: ",wait)
                         print("Running")
 
                     if has_SmartEnemies(enemies) and not put_bomb:
@@ -206,6 +214,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                                 print("Arriving at wall, back to Oneal")
                                 count_oneal = 0
 
+                        print("RUN 5: ",run)
                     if calc_distance(position, wall_closer) == 1 and not put_bomb:  # attack a wall
                         key = attack()
                         # print("Attacking wall")
@@ -217,7 +226,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
 
                 if not put_bomb and not power_up_reveal:  # if bomb is not planted and power-up not found yet
                     key = astar_path(mapa.map, position, find_power_up(power_ups), True, enemies, way)  # Get power-up
-                    wait_time = 6
+                    wait_time = 7
                     # print("Going to power_up")
 
                 if pos_enemy is not None:
@@ -227,6 +236,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                         key = attack()
                         print("Attacking")
 
+                print("RUN 6: ",run)
                 if key is None or waiting_for_enemies:  # Ficar parado
                     if key is None:
                         key = ""
@@ -251,16 +261,26 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 if Detonate:
                     key = "A"
 
-               # if pos_ant == position and position != [1, 1] and position != [1,2] and position != [1,3]:
+                print("RUN 7: ",run)
+                # if pos_ant == position and position != [1, 1]:
                 #    count += 1
+                # print("CONTADOR: ",count) 
 
-               # if count >= 50 and position != [1, 1 ]and position != [1,2] and position != [1,3]:
-                  #  key = random_key()
-                   # count = 0
+                # if put_bomb and wait == 0:
+                #     print("Aumentar contador $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
+                #     count += 1
+                # else:
+                #     count = 0
+
+                # if count == 5:
+                #     print("ENTREI #####################################################################################")
+                #     put_bomb = False
+                #     run = False
+                #     count = 0
 
                 print("key: ", key)
                 way.append(position)
-               # pos_ant = position
+                # pos_ant = position
 
                 ##################################################################################################################################################
 
