@@ -224,7 +224,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
 
                 power_up_reveal_before = power_up_reveal
 
-                if not put_bomb and not power_up_reveal:  # if bomb is not planted and power-up not found yet
+                if not put_bomb and not power_up_reveal and not run:  # if bomb is not planted and power-up not found yet
                     key = astar_path(mapa.map, position, find_power_up(power_ups), True, enemies, way)  # Get power-up
                     wait_time = 7
                     # print("Going to power_up")
