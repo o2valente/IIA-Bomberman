@@ -55,6 +55,8 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
         power_up_found = False
         count = 0
         pos_ant = None
+        suicide = False
+
 
         while True:
             try:
@@ -224,7 +226,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
 
                 power_up_reveal_before = power_up_reveal
 
-                if not put_bomb and not power_up_reveal and not run:  # if bomb is not planted and power-up not found yet
+                if not put_bomb and not power_up_reveal and not run and not put_bomb:  # if bomb is not planted and power-up not found yet
                     key = astar_path(mapa.map, position, find_power_up(power_ups), True, enemies, way)  # Get power-up
                     wait_time = 7
                     # print("Going to power_up")
@@ -257,6 +259,26 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 if power_up_found and len(enemies) == 0 and exit_pos != []:
                     key = astar_path(mapa.map, position, exit_pos, True, enemies, way)  # Go to exit
                     # print("All done, going to exit")
+
+                if pos_ant == position and position != [1,1]:
+                    print("PARADO")
+                    count += 1
+                else:
+                    count = 0
+
+                if count >= 100 and suicide:
+                    "VAMOS SUICIDAR-NOS"
+                    key = "A"
+                    count = 0
+                    suicide = False
+                elif count >= 100 and got_Detonator:
+                    print("VAMOS POR BOMBA")
+                    key = attack()
+                    suicide = True
+                elif count >= 100 and not got_Detonator:
+                    print("VAMOS ATACAR")
+                    key = attack()
+                    count = 0
                 
                 if Detonate:
                     key = "A"
@@ -266,7 +288,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
 
                 print("key: ", key)
                 way.append(position)
-                #pos_ant = position
+                pos_ant = position
 
                 ##################################################################################################################################################
 
