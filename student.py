@@ -257,30 +257,16 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 if power_up_found and len(enemies) == 0 and exit_pos != []:
                     key = astar_path(mapa.map, position, exit_pos, True, enemies, way)  # Go to exit
                     # print("All done, going to exit")
-
+                
                 if Detonate:
                     key = "A"
 
                 print("RUN 7: ",run)
-                # if pos_ant == position and position != [1, 1]:
-                #    count += 1
-                # print("CONTADOR: ",count) 
 
-                # if put_bomb and wait == 0:
-                #     print("Aumentar contador $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
-                #     count += 1
-                # else:
-                #     count = 0
-
-                # if count == 5:
-                #     print("ENTREI #####################################################################################")
-                #     put_bomb = False
-                #     run = False
-                #     count = 0
 
                 print("key: ", key)
                 way.append(position)
-                # pos_ant = position
+                #pos_ant = position
 
                 ##################################################################################################################################################
 
