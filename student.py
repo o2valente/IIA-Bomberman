@@ -64,6 +64,9 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                     await websocket.recv()
                 )  # receive game state, this must be called timely or your game will get out of sync with the server4
 
+                while websocket.messages:
+                    state = json.loads(await websocket.recv())
+
                 ######################################################################################################################################
                 try:
                     position = state['bomberman']  # Bomberman's position
@@ -209,14 +212,14 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                         if calc_distance(position, find_SmartEnemies(position, enemies)['pos']) <= 5:
                             count_oneal += 1
                             print("Stuck at Oneal")
-                        if count_oneal >= 50:
+                        if count_oneal >= 100:
                             print("Leave Oneal")
                             key = astar_path(mapa.map, position, wall_closer, False, enemies, way)
                             if calc_distance(position, wall_closer) <= 1:
                                 print("Arriving at wall, back to Oneal")
                                 count_oneal = 0
 
-                        print("RUN 5: ",run)
+                        print("RUN 5: ", run)
                     if calc_distance(position, wall_closer) == 1 and not put_bomb:  # attack a wall
                         key = attack()
                         # print("Attacking wall")
@@ -260,14 +263,14 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                     key = astar_path(mapa.map, position, exit_pos, True, enemies, way)  # Go to exit
                     # print("All done, going to exit")
 
-                if pos_ant == position and position != [1,1]:
+                if pos_ant == position and position != [1, 1]:
                     print("PARADO")
                     count += 1
                 else:
                     count = 0
 
                 if count >= 100 and suicide:
-                    "VAMOS SUICIDAR-NOS"
+                    # "VAMOS SUICIDAR-NOS"
                     key = "A"
                     count = 0
                     suicide = False
