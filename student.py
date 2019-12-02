@@ -71,6 +71,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 try:
                     position = state['bomberman']  # Bomberman's position
                     walls = state['walls']  # Walls's position
+                    mapa.walls = walls
                     enemies = state['enemies']  # Enemy's position
                     power_ups = state['powerups']  # Power-Ups's position
                     level = state['level']  # Get Level
