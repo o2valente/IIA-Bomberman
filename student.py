@@ -81,6 +81,8 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 except:
                     pass
 
+                spawn = [row for row in mapa.bomberman_spawn]
+
                 if bombs:
                     bomb = bombs[0]
                 else:
@@ -141,9 +143,9 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
 
                     if len(enemies) != 0:  # If there are still enemies
                         if has_DumbEnemies(enemies):
-                            if not put_bomb and position != [1, 1]:  # If power-up is found
-                                key = astar_path(mapa.map, position, [1, 1], True, enemies, way)
-                            elif position == [1, 1] and calc_distance(position, pos_enemy) > 3 and not put_bomb:
+                            if not put_bomb and position != spawn:  # If power-up is found
+                                key = astar_path(mapa.map, position, spawn, True, enemies, way)
+                            elif position == spawn and calc_distance(position, pos_enemy) > 3 and not put_bomb:
                                 waiting_for_enemies = True
                             elif calc_distance(position, pos_enemy) < 4 and not put_bomb and on_same_line(position,
                                                                                                           pos_enemy,
@@ -172,7 +174,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 
                     if put_bomb and run:  # Run from bomb and wait for explosion
                         key = astar_path(mapa.map, position, run_to, True, enemies, way)
-                        if position == [1, 1]:
+                        if position == spawn:
                             run = False
                             put_bomb = False
                         if position == run_to and wait < wait_time and not got_Detonator:
@@ -234,7 +236,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                     key = astar_path(mapa.map, position, exit_pos, True, enemies, way)  # Go to exit
                     # print("All done, going to exit")
 
-                if pos_ant == position and position != [1, 1]:
+                if pos_ant == position and position != spawn:
                     count += 1
                 else:
                     count = 0

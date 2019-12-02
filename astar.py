@@ -34,7 +34,7 @@ def astar(maze, start, end,enemies):
     break_loop = 0
     # Loop until you find the end
     while len(open_list) > 0:
-        if break_loop >= 100:
+        if break_loop >= 250:
             return []
 
         break_loop += 1
