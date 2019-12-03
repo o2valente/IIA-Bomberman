@@ -83,6 +83,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                     pass
 
                 spawn = list(mapa.bomberman_spawn)
+                corner = get_corner(mapa)
 
                 if bombs:
                     bomb = bombs[0]
@@ -165,9 +166,9 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
 
                     if len(enemies) != 0:  # If there are still enemies
                         if has_DumbEnemies(enemies):
-                            if not put_bomb and position != spawn:  # If power-up is found
-                                key = astar_path(mapa.map, position, spawn, True, enemies, way,mapa)
-                            elif position == spawn and calc_distance(position, pos_enemy) > 3 and not put_bomb:
+                            if not put_bomb and position != corner:  # If power-up is found
+                                key = astar_path(mapa.map, position, corner, True, enemies, way,mapa)
+                            elif position == corner and calc_distance(position, pos_enemy) > 3 and not put_bomb:
                                 waiting_for_enemies = True
                             elif calc_distance(position, pos_enemy) < 4 and not put_bomb and on_same_line(position,
                                                                                                           pos_enemy,
@@ -219,7 +220,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                             run = False
                             way = []
                             Detonate = True
-                            
+
                     if len(enemies):
                         if (got_Detonator or has_SmartEnemies(enemies)) and not put_bomb:
                             attack_distance = 4
@@ -276,7 +277,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
 
                 
 
-                if pos_ant == position and position != spawn:
+                if pos_ant == position and position != corner:
                     count += 1
                 else:
                     count = 0
@@ -311,6 +312,11 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
             # Next line is not needed for AI agent
         #    pygame.display.flip()
 
+def get_corner(mapa):
+    for x in range(mapa.hor_tiles):
+        for y in range(mapa.ver_tiles):
+            if not mapa.is_blocked((x, y)):
+                return x, y
 
 def on_same_line(pos, dest, mapa):
     x, y = pos
