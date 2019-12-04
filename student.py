@@ -58,8 +58,6 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
         pos_ant = None
         suicide = False
         lives_ant = 3
-        objectives = []
-        wall_closer = None
 
         while True:
             try:
@@ -85,7 +83,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 except:
                     pass
 
-                corner = get_corner(mapa)
+                spawn = [row for row in mapa.bomberman_spawn]
 
                 if bombs:
                     bomb = bombs[0]
@@ -119,17 +117,19 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 x,y = position
                 print("POSIÇAO: ",position)
                 print("INIMIGO: ",pos_enemy)
-                print("VIDAS: ",lives)
 
                 ################################## No Walls ########################################################################
                 if len(walls) == 0:  # If walls are all destroyed
                     if put_bomb and not run:  # Set running route
-                        run_to = run_away(mapa, position, enemies, walls, bomb, pos_enemy,6)
+                        run_to = run_away(mapa, position, enemies, walls, bomb, pos_enemy)
                         wait = 0
                         run = True
 
                     if put_bomb and run:  # Run from bomb and wait for explosion
+                        print("Posição: ",position)
+                        print("Destino: ",run_to)
                         if not way:
+                            print("NAAAAOOOO")
                             key = ""
                         else:
                             key = way.pop()
@@ -163,9 +163,9 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
 
                     if len(enemies) != 0:  # If there are still enemies
                         if has_DumbEnemies(enemies):
-                            if not put_bomb and position != corner:  # If power-up is found
-                                key = astar_path(mapa.map, position, corner, True, enemies, way)
-                            elif position == corner and calc_distance(position, pos_enemy) > 3 and not put_bomb:
+                            if not put_bomb and position != spawn:  # If power-up is found
+                                key = astar_path(mapa.map, position, spawn, True, enemies, way)
+                            elif position == spawn and calc_distance(position, pos_enemy) > 3 and not put_bomb:
                                 waiting_for_enemies = True
                             elif calc_distance(position, pos_enemy) < 4 and not put_bomb and on_same_line(position,
                                                                                                           pos_enemy,
@@ -186,52 +186,39 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 ############################################### With Walls ####################################################
                 else:  # If walls exist
 
-                    # print("OBJETIVOS 1: ",objectives)
-                    # if not objectives:
-                    if wall_closer not in walls:
-                        wall_closer = get_walls(position, mapa, walls)  # Get closer wall
-                        # objectives.append(wall_closer)
-                    # print("OBJETIVOS 2: ",objectives)
-                    print("Wall closer",wall_closer)
+                    wall_closer = get_walls(position, mapa, walls)  # Get closer wall
                     key = astar_path(mapa.map, position, wall_closer, False, enemies, way)  # walk to the closest wall
 
                     if put_bomb and not run:  # Set running route
-                        run_to = run_away(mapa, position, enemies, walls, bomb, pos_enemy,6)
+                        run_to = run_away(mapa, position, enemies, walls, bomb, pos_enemy)
                         wait = 0
                         run = True
                 
                     if put_bomb and run:  # Run from bomb and wait for explosion
-          
+                        print("Posição: ",position)
+                        print("Destino: ",run_to)
+                        print(way)
                         if not way:
-                            print("NADA")
+                            print("NAAAAOOOO")
                             key = ""
                         else:
-                            print("POP")
                             key = way.pop()
                         if lives_ant != lives:
                             run = False
                             put_bomb = False
-                            # if objectives:
-                                # objectives = []
                             way = []
-                            print("Morreuuuu")
                         if position == run_to and wait < wait_time and not got_Detonator:
-                            print("Esperar")
                             wait += 1
                             key = ""
                         elif position == run_to and not got_Detonator or wait >= wait_time:
                             put_bomb = False
                             run = False
-                            # objectives = []
                             way = []
-                            print("Safe and sound")
                         elif got_Detonator and position == run_to:
                             put_bomb = False
                             run = False
-                            # objectives = []
                             way = []
                             Detonate = True
-                            print("Safe and Detonate")
                         
 
                     if has_SmartEnemies(enemies) and not put_bomb:
@@ -249,10 +236,8 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                         key = astar_path(mapa.map, position, exit_pos, True, enemies, way)  # Go to exit
                         # print("All done, going to exit")
 
-                    print("IS BESIDE WALLS?: ",is_beside_walls(position,walls))
-                    if is_beside_walls(position,walls) and not put_bomb:  # attack a wall
+                    if calc_distance(position, wall_closer) == 1 and not put_bomb:  # attack a wall
                         key = attack()
-                        # print("OBJETIVOS 3: ",objectives)
 
                 ####################################################################################################################
                 ############################################ WITH OR WITHOUT WALLS #################################################
@@ -292,7 +277,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
 
                 
 
-                if pos_ant == position and position != corner:
+                if pos_ant == position and position != spawn:
                     count += 1
                 else:
                     count = 0
@@ -327,24 +312,6 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
             # Next line is not needed for AI agent
         #    pygame.display.flip()
 
-def is_beside_walls(position,walls):
-
-    x,y = position
-    if [x+1,y] in walls:
-        return True
-    elif [x-1,y] in walls:
-        return True
-    elif [x,y+1] in walls:
-        return True
-    elif [x,y-1] in walls:
-        return True
-    
-    return False
-def get_corner(mapa):
-    for x in range(mapa.hor_tiles):
-        for y in range(mapa.ver_tiles):
-            if not mapa.is_blocked((x, y)):
-                return [x, y]
 
 def on_same_line(pos, dest, mapa):
     x, y = pos
@@ -387,10 +354,8 @@ def astar_path(mapa, pos, destiny, close, enemies, way):
     else:
         if len(path) <= 1 and close:
             return walk(pos, destiny)
-        elif len(path) <= 1:
+        elif len(path) <= 1 or has_enemy(path[1], enemies) or len(path) >= 3 and has_enemy(path[2], enemies):
             return random_key()
-        # elif len(path) <= 1 or has_enemy(path[1], enemies) or len(path) >= 3 and has_enemy(path[2], enemies):
-        #     return random_key()
 
     return walk(path[0], path[1])
 
@@ -424,45 +389,42 @@ def find_SmartEnemies(position, enemies):
     return enemy_closer
 
 
-def run_away(mapa, pos, enemies, walls, bomb, close_enemy,dist):
+def run_away(mapa, pos, enemies, walls, bomb, close_enemy):
     if is_between_walls(mapa, pos):
         # Foge de uma maneira
-        return bw_is_safe(mapa, pos, enemies, walls, bomb, close_enemy, dist)
+        return bw_is_safe(mapa, pos, enemies, walls, bomb, close_enemy)
     elif not is_between_walls(mapa, pos):
         # Foge de outra maneira
-        return not_bw_is_safe(mapa, pos, enemies, walls, bomb, close_enemy,dist)
+        return not_bw_is_safe(mapa, pos, enemies, walls, bomb, close_enemy)
     return pos
 
 
-def bw_is_safe(mapa, pos, enemies, walls, bomb, close_enemy,dist):
+def bw_is_safe(mapa, pos, enemies, walls, bomb, close_enemy):
     x, y = pos
     global way
 
-    if dist == 1:
-        return run_away_2(mapa,pos,enemies,walls,bomb,close_enemy)
-
-    if not has_enemy((x + 1, y), enemies,dist) and not mapa.is_blocked((x+1,y)):
-        if not has_enemy((x + 1, y + 1), enemies,dist) and not mapa.is_blocked((x+1,y+1)):
+    if not has_enemy((x + 1, y), enemies) and not mapa.is_blocked((x+1,y)):
+        if not has_enemy((x + 1, y + 1), enemies) and not mapa.is_blocked((x+1,y+1)):
             # if not in_range((x + 1,y + 1),bomb,mapa):
             # if calc_distance((x + 1,y + 1),close_enemy) > 3:
             way.append('s')
             way.append('d')
             return [x + 1, y + 1]
-        if not has_enemy((x + 1, y - 1), enemies,dist) and not mapa.is_blocked((x+1,y-1)):
+        if not has_enemy((x + 1, y - 1), enemies) and not mapa.is_blocked((x+1,y-1)):
             # if not in_range((x + 1,y - 1),bomb,mapa):
             # if calc_distance((x + 1,y - 1),close_enemy) > 3:
             way.append('w')
             way.append('d')
             return [x + 1, y - 1]
 
-    if not has_enemy((x - 1, y), enemies,dist) and not mapa.is_blocked((x-1,y)):
-        if not has_enemy((x - 1, y + 1), enemies,dist) and not mapa.is_blocked((x-1,y+1)):
+    if not has_enemy((x - 1, y), enemies) and not mapa.is_blocked((x-1,y)):
+        if not has_enemy((x - 1, y + 1), enemies) and not mapa.is_blocked((x-1,y+1)):
             # if not in_range((x - 1,y + 1),bomb,mapa):
             # if calc_distance((x-1,y+1),close_enemy) > 3:
             way.append('s')
             way.append('a')
             return [x - 1, y + 1]
-        if not has_enemy((x - 1, y - 1), enemies, dist) and not mapa.is_blocked((x-1,y-1)):
+        if not has_enemy((x - 1, y - 1), enemies) and not mapa.is_blocked((x-1,y-1)):
             # if not in_range((x - 1,y - 1),bomb,mapa):
             # if calc_distance((x-1,y-1),close_enemy) > 3:
             way.append('w')
@@ -470,15 +432,15 @@ def bw_is_safe(mapa, pos, enemies, walls, bomb, close_enemy,dist):
             return [x - 1, y - 1]
 
     ##################################################################################################################
-    if not has_enemy((x, y + 1), enemies,dist) and not mapa.is_blocked((x,y+1)):
-        if not has_enemy((x + 1, y + 1), enemies,dist) and not mapa.is_blocked((x+1,y+1)):
+    if not has_enemy((x, y + 1), enemies) and not mapa.is_blocked((x,y+1)):
+        if not has_enemy((x + 1, y + 1), enemies) and not mapa.is_blocked((x+1,y+1)):
             # if not has_enemy((x + 2, y + 1), enemies) and mapa.map[x + 2][y + 1] == 0 and [x + 2, y + 1] not in walls:
             # if not in_range((x + 2,y + 1),bomb,mapa):
             # if calc_distance((x+2,y+1),close_enemy) > 3:
             way.append('d')
             way.append('s')
             return [x + 1, y + 1]
-        if not has_enemy((x - 1, y + 1), enemies,dist) and not mapa.is_blocked((x-1,y+1)):
+        if not has_enemy((x - 1, y + 1), enemies) and not mapa.is_blocked((x-1,y+1)):
             # if not has_enemy((x - 2, y + 1), enemies) and mapa.map[x - 2][y + 1] == 0 and [x - 2, y + 1] not in walls:
             # if not in_range((x - 2,y + 1),bomb,mapa):
             # if calc_distance((x-2,y+1),close_enemy) > 3:
@@ -486,15 +448,15 @@ def bw_is_safe(mapa, pos, enemies, walls, bomb, close_enemy,dist):
             way.append('s')
             return [x - 1, y + 1]
 
-    if not has_enemy((x, y - 1), enemies,dist) and not mapa.is_blocked((x,y-1)):
-        if not has_enemy((x + 1, y - 1), enemies,dist) and not mapa.is_blocked((x+1,y-1)):
+    if not has_enemy((x, y - 1), enemies) and not mapa.is_blocked((x,y-1)):
+        if not has_enemy((x + 1, y - 1), enemies) and not mapa.is_blocked((x+1,y-1)):
             # if not has_enemy((x + 2, y - 1), enemies) and mapa.map[x + 2][y - 1] == 0 and [x + 2, y - 1] not in walls:
             # if not in_range((x + 2,y - 1),bomb,mapa):
             # if calc_distance((x+2,y-1),close_enemy) > 3:
             way.append('d')
             way.append('w')
             return [x + 1, y - 1]
-        if not has_enemy((x - 1, y - 1), enemies,dist) and not mapa.is_blocked((x-1,y-1)):
+        if not has_enemy((x - 1, y - 1), enemies) and not mapa.is_blocked((x-1,y-1)):
             # if not has_enemy((x - 2, y - 1), enemies) and mapa.map[x - 2][y - 1] == 0 and [x - 2, y - 1] not in walls:
             # if not in_range((x - 2,y - 1),bomb,mapa):
             # if calc_distance((x-2,y-1),close_enemy) > 3:
@@ -502,26 +464,23 @@ def bw_is_safe(mapa, pos, enemies, walls, bomb, close_enemy,dist):
             way.append('w')
             return [x - 1, y - 1]
 
-    return run_away(mapa,pos,enemies,walls,bomb,close_enemy,dist-1)
+    return run_away_2(mapa, pos, enemies, walls, bomb, close_enemy)
 
 
-def not_bw_is_safe(mapa, pos, enemies, walls, bomb, close_enemy,dist):
+def not_bw_is_safe(mapa, pos, enemies, walls, bomb, close_enemy):
     x, y = pos
     global way
 
-    if dist == 1:
-        return run_away_2(mapa,pos,enemies,walls,bomb,close_enemy)
-
-    if not has_enemy((x, y + 1), enemies,dist) and not mapa.is_blocked((x,y+1)):
-        if not has_enemy((x, y + 2), enemies,dist) and not mapa.is_blocked((x,y+2)):
-            if not has_enemy((x + 1, y + 2), enemies,dist) and not mapa.is_blocked((x+1,y+2)):
+    if not has_enemy((x, y + 1), enemies) and not mapa.is_blocked((x,y+1)):
+        if not has_enemy((x, y + 2), enemies) and not mapa.is_blocked((x,y+2)):
+            if not has_enemy((x + 1, y + 2), enemies) and not mapa.is_blocked((x+1,y+2)):
                 # if not in_range((x + 1,y + 2),bomb,mapa):
                 # if calc_distance((x+1,y+2),close_enemy) > 3:
                 way.append('d')
                 way.append('s')
                 way.append('s')
                 return [x + 1, y + 2]
-            if not has_enemy((x - 1, y + 2), enemies,dist) and not mapa.is_blocked((x-1,y+2)):
+            if not has_enemy((x - 1, y + 2), enemies) and not mapa.is_blocked((x-1,y+2)):
                 # if not in_range((x - 1,y + 2),bomb,mapa):
                 # if calc_distance((x-1,y+2),close_enemy) > 3:
                 way.append('a')
@@ -529,16 +488,16 @@ def not_bw_is_safe(mapa, pos, enemies, walls, bomb, close_enemy,dist):
                 way.append('s')
                 return [x - 1, y + 2]
 
-    if not has_enemy((x, y - 1), enemies,dist) and not mapa.is_blocked((x,y-1)):
-        if not has_enemy((x, y - 2), enemies,dist) and not mapa.is_blocked((x,y-2)):
-            if not has_enemy((x + 1, y - 2), enemies,dist) and not mapa.is_blocked((x+1,y-2)):
+    if not has_enemy((x, y - 1), enemies) and not mapa.is_blocked((x,y-1)):
+        if not has_enemy((x, y - 2), enemies) and not mapa.is_blocked((x,y-2)):
+            if not has_enemy((x + 1, y - 2), enemies) and not mapa.is_blocked((x+1,y-2)):
                 # if not in_range((x + 1,y - 2),bomb,mapa):
                 # if calc_distance((x+1,y-2),close_enemy) > 3:
                 way.append('d')
                 way.append('w')
                 way.append('w')
                 return [x + 1, y - 2]
-            if not has_enemy((x - 1, y - 2), enemies,dist) and not mapa.is_blocked((x-1,y-2)):
+            if not has_enemy((x - 1, y - 2), enemies) and not mapa.is_blocked((x-1,y-2)):
                 # if not in_range((x - 1,y - 2),bomb,mapa):
                 # if calc_distance((x-1,y-2),close_enemy) > 3:
                 way.append('a')
@@ -546,16 +505,16 @@ def not_bw_is_safe(mapa, pos, enemies, walls, bomb, close_enemy,dist):
                 way.append('w')
                 return [x - 1, y - 2]
 
-    if not has_enemy((x + 1, y), enemies,dist) and not mapa.is_blocked((x+1,y)):
-        if not has_enemy((x + 2, y), enemies,dist) and not mapa.is_blocked((x+2,y)):
-            if not has_enemy((x + 2, y + 1), enemies,dist) and not mapa.is_blocked((x+2,y+1)):
+    if not has_enemy((x + 1, y), enemies) and not mapa.is_blocked((x+1,y)):
+        if not has_enemy((x + 2, y), enemies) and not mapa.is_blocked((x+2,y)):
+            if not has_enemy((x + 2, y + 1), enemies) and not mapa.is_blocked((x+2,y+1)):
                 # if not in_range((x + 2,y + 1),bomb,mapa):
                 # if calc_distance((x+2,y+1),close_enemy) > 3:
                 way.append('s')
                 way.append('d')
                 way.append('d')
                 return [x + 2, y + 1]
-            if not has_enemy((x + 2, y - 1), enemies,dist) and not mapa.is_blocked((x+2,y-1)):
+            if not has_enemy((x + 2, y - 1), enemies) and not mapa.is_blocked((x+2,y-1)):
                 # if not in_range((x + 2,y - 1),bomb,mapa):
                 # if calc_distance((x+2,y-1),close_enemy) > 3:
                 way.append('w')
@@ -563,16 +522,16 @@ def not_bw_is_safe(mapa, pos, enemies, walls, bomb, close_enemy,dist):
                 way.append('d')
                 return [x + 2, y - 1]
 
-    if not has_enemy((x - 1, y), enemies,dist) and not mapa.is_blocked((x-1,y)):
-        if not has_enemy((x - 2, y), enemies,dist) and not mapa.is_blocked((x-2,y)):
-            if not has_enemy((x - 2, y + 1), enemies,dist) and not mapa.is_blocked((x-2,y+1)):
+    if not has_enemy((x - 1, y), enemies) and not mapa.is_blocked((x-1,y)):
+        if not has_enemy((x - 2, y), enemies) and not mapa.is_blocked((x-2,y)):
+            if not has_enemy((x - 2, y + 1), enemies) and not mapa.is_blocked((x-2,y+1)):
                 # if not in_range((x - 2,y + 1),bomb,mapa):
                 # if calc_distance((x-2,y+1),close_enemy) > :
                 way.append('s')
                 way.append('a')
                 way.append('a')
                 return [x - 2, y + 1]
-            if not has_enemy((x - 2, y - 1), enemies,dist) and not mapa.is_blocked((x-2,y-1)):
+            if not has_enemy((x - 2, y - 1), enemies) and not mapa.is_blocked((x-2,y-1)):
                 # if not in_range((x - 2,y - 1),bomb,mapa):
                 # if calc_distance((x-2,y-1),close_enemy) > 2:
                 way.append('w')
@@ -581,7 +540,7 @@ def not_bw_is_safe(mapa, pos, enemies, walls, bomb, close_enemy,dist):
                 return [x - 2, y - 1]
 
 
-    return run_away(mapa,pos,enemies,walls,bomb,close_enemy,dist-1)
+    return run_away_2(mapa, pos, enemies, walls, bomb, close_enemy)
 
 
 ########################################### In case the first L doesnt work #############################################################################
@@ -751,14 +710,14 @@ def is_between_walls(mapa, pos):
     return False
 
 
-def has_enemy(location, enemies, dist):
-    print("RAIO: ",dist)
+def has_enemy(location, enemies):
     x, y = location
     for enemy in enemies:
         enemy = tuple(enemy['pos'])
-        if calc_distance(location,enemy) < dist:
+        if (x, y) == enemy or (x + 1, y) == enemy or (x - 1, y - 1) == enemy or (x, y - 1) == enemy or (
+                x - 1, y - 1) == enemy or (x - 1, y) == enemy or (x - 1, y + 1) == enemy or (x, y + 1) == enemy or (
+                x + 1, y + 1) == enemy:
             return True
-
     return False
 
 
