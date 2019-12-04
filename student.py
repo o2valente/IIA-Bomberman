@@ -85,6 +85,10 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 except:
                     pass
 
+                if len(enemies)== 0 and level == 15:
+                    print("WUT?")
+                    return 0
+
                 corner = get_corner(mapa)
 
                 if bombs:
@@ -244,7 +248,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                                                                                                               pos_enemy,
                                                                                                               mapa):
                         key = attack()
-                
+
                 if power_up_found and len(enemies) == 0 and exit_pos != [] and not run and not walls:
                         key = astar_path(mapa.map, position, exit_pos, True, enemies, way)  # Go to exit
 
