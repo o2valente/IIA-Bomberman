@@ -1,5 +1,4 @@
 import math
-from mapa import Map
 
 class Node():
     """A node class for A* Pathfinding"""
@@ -16,7 +15,7 @@ class Node():
         return self.position == other.position
 
 
-def astar(maze, start, end,mapa):
+def astar(maze, start, end,enemies):
     """Returns a list of tuples as a path from the given start to the given end in the given maze"""
 
     # Create start and end node
@@ -35,7 +34,7 @@ def astar(maze, start, end,mapa):
     break_loop = 0
     # Loop until you find the end
     while len(open_list) > 0:
-        if break_loop >= 250:
+        if break_loop >= 500:
             return []
 
         break_loop += 1
@@ -74,7 +73,7 @@ def astar(maze, start, end,mapa):
             # Make sure walkable terrain
             if maze[node_position[0]][node_position[1]] != 0 or [node_position[0], node_position[1]] in node_position:
                 continue
-            #or mapa.is_blocked(node_position)
+
             # Create new node
             new_node = Node(current_node, node_position)
 
