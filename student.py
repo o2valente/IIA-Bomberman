@@ -85,10 +85,6 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 except:
                     pass
 
-                if len(enemies)== 0 and level == 15:
-                    print("WUT?")
-                    return 0
-
                 corner = get_corner(mapa)
 
                 if bombs:
