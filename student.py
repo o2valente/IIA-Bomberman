@@ -58,6 +58,8 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
         pos_ant = None
         suicide = False
         lives_ant = 3
+        objectives = []
+        wall_closer = None
 
         while True:
             try:
@@ -83,7 +85,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 except:
                     pass
 
-                spawn = [row for row in mapa.bomberman_spawn]
+                corner = get_corner(mapa)
 
                 if bombs:
                     bomb = bombs[0]
@@ -117,6 +119,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 x,y = position
                 print("POSIÇAO: ",position)
                 print("INIMIGO: ",pos_enemy)
+                print("VIDAS: ",lives)
 
                 ################################## No Walls ########################################################################
                 if len(walls) == 0:  # If walls are all destroyed
@@ -126,10 +129,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                         run = True
 
                     if put_bomb and run:  # Run from bomb and wait for explosion
-                        print("Posição: ",position)
-                        print("Destino: ",run_to)
                         if not way:
-                            print("NAAAAOOOO")
                             key = ""
                         else:
                             key = way.pop()
@@ -163,9 +163,9 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
 
                     if len(enemies) != 0:  # If there are still enemies
                         if has_DumbEnemies(enemies):
-                            if not put_bomb and position != spawn:  # If power-up is found
-                                key = astar_path(mapa.map, position, spawn, True, enemies, way)
-                            elif position == spawn and calc_distance(position, pos_enemy) > 3 and not put_bomb:
+                            if not put_bomb and position != corner:  # If power-up is found
+                                key = astar_path(mapa.map, position, corner, True, enemies, way)
+                            elif position == corner and calc_distance(position, pos_enemy) > 3 and not put_bomb:
                                 waiting_for_enemies = True
                             elif calc_distance(position, pos_enemy) < 4 and not put_bomb and on_same_line(position,
                                                                                                           pos_enemy,
@@ -186,7 +186,13 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 ############################################### With Walls ####################################################
                 else:  # If walls exist
 
-                    wall_closer = get_walls(position, mapa, walls)  # Get closer wall
+                    # print("OBJETIVOS 1: ",objectives)
+                    # if not objectives:
+                    if wall_closer not in walls:
+                        wall_closer = get_walls(position, mapa, walls)  # Get closer wall
+                        # objectives.append(wall_closer)
+                    # print("OBJETIVOS 2: ",objectives)
+                    print("Wall closer",wall_closer)
                     key = astar_path(mapa.map, position, wall_closer, False, enemies, way)  # walk to the closest wall
 
                     if put_bomb and not run:  # Set running route
@@ -195,30 +201,37 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                         run = True
                 
                     if put_bomb and run:  # Run from bomb and wait for explosion
-                        print("Posição: ",position)
-                        print("Destino: ",run_to)
-                        print(way)
+          
                         if not way:
-                            print("NAAAAOOOO")
+                            print("NADA")
                             key = ""
                         else:
+                            print("POP")
                             key = way.pop()
                         if lives_ant != lives:
                             run = False
                             put_bomb = False
+                            # if objectives:
+                                # objectives = []
                             way = []
+                            print("Morreuuuu")
                         if position == run_to and wait < wait_time and not got_Detonator:
+                            print("Esperar")
                             wait += 1
                             key = ""
                         elif position == run_to and not got_Detonator or wait >= wait_time:
                             put_bomb = False
                             run = False
+                            # objectives = []
                             way = []
+                            print("Safe and sound")
                         elif got_Detonator and position == run_to:
                             put_bomb = False
                             run = False
+                            # objectives = []
                             way = []
                             Detonate = True
+                            print("Safe and Detonate")
                         
 
                     if has_SmartEnemies(enemies) and not put_bomb:
@@ -236,8 +249,10 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                         key = astar_path(mapa.map, position, exit_pos, True, enemies, way)  # Go to exit
                         # print("All done, going to exit")
 
-                    if calc_distance(position, wall_closer) == 1 and not put_bomb:  # attack a wall
+                    print("IS BESIDE WALLS?: ",is_beside_walls(position,walls))
+                    if is_beside_walls(position,walls) and not put_bomb:  # attack a wall
                         key = attack()
+                        # print("OBJETIVOS 3: ",objectives)
 
                 ####################################################################################################################
                 ############################################ WITH OR WITHOUT WALLS #################################################
@@ -277,7 +292,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
 
                 
 
-                if pos_ant == position and position != spawn:
+                if pos_ant == position and position != corner:
                     count += 1
                 else:
                     count = 0
@@ -312,6 +327,24 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
             # Next line is not needed for AI agent
         #    pygame.display.flip()
 
+def is_beside_walls(position,walls):
+
+    x,y = position
+    if [x+1,y] in walls:
+        return True
+    elif [x-1,y] in walls:
+        return True
+    elif [x,y+1] in walls:
+        return True
+    elif [x,y-1] in walls:
+        return True
+    
+    return False
+def get_corner(mapa):
+    for x in range(mapa.hor_tiles):
+        for y in range(mapa.ver_tiles):
+            if not mapa.is_blocked((x, y)):
+                return [x, y]
 
 def on_same_line(pos, dest, mapa):
     x, y = pos
@@ -464,7 +497,7 @@ def bw_is_safe(mapa, pos, enemies, walls, bomb, close_enemy):
             way.append('w')
             return [x - 1, y - 1]
 
-    return run_away_2(mapa, pos, enemies, walls, bomb, close_enemy)
+    return run_away_2(mapa,pos,enemies,bomb,close_enemy)
 
 
 def not_bw_is_safe(mapa, pos, enemies, walls, bomb, close_enemy):
@@ -540,7 +573,7 @@ def not_bw_is_safe(mapa, pos, enemies, walls, bomb, close_enemy):
                 return [x - 2, y - 1]
 
 
-    return run_away_2(mapa, pos, enemies, walls, bomb, close_enemy)
+    return run_away_2(mapa,pos,enemies,walls,bomb,close_enemy)
 
 
 ########################################### In case the first L doesnt work #############################################################################
@@ -719,7 +752,6 @@ def has_enemy(location, enemies):
                 x + 1, y + 1) == enemy:
             return True
     return False
-
 
 def find_power_up(power_ups):
     for power in power_ups:
